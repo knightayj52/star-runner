@@ -86,6 +86,34 @@
     font-size:12px; font-family:monospace; resize:none; }
   .tip { font-size:13px; color:#8a9a8a; line-height:1.5; }
 
+  /* ---------- 캐릭터 ---------- */
+  .charRow { display:flex; align-items:center; gap:8px; background:#f2f7ee; border-radius:14px;
+    padding:8px 10px; margin-bottom:8px; text-align:left; border:3px solid transparent; cursor:pointer; }
+  .charRow.equipped { border-color:#6cc24a; background:#eaf7e2; }
+  .charRow.locked { opacity:.6; filter:grayscale(.5); }
+  .charInfo { flex:1; min-width:0; }
+  .charName { font-size:16px; color:#4a5a4a; }
+  .charPass { font-size:12px; color:#5aa9e6; }
+  .charMission { font-size:12px; color:#c07a20; }
+  .charExpBar { height:7px; background:#dfe8d8; border-radius:4px; margin-top:4px; overflow:hidden; }
+  .charExpFill { height:100%; background:linear-gradient(90deg,#6cc24a,#a8d84a); border-radius:4px; }
+
+  /* ---------- 소환수 ---------- */
+  #petGrid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+  .petCard { background:#f2f7ee; border-radius:14px; padding:6px 3px 7px; text-align:center;
+    border:3px solid transparent; cursor:pointer; position:relative; }
+  .petCard.equipped { border-color:#6cc24a; background:#eaf7e2; }
+  .petCard.unowned { opacity:.5; filter:grayscale(.8); }
+  .petName { font-size:12px; color:#4a5a4a; }
+  .petAb { font-size:10px; color:#8a9a8a; margin-bottom:2px; }
+  .petStatLine { display:flex; justify-content:space-between; align-items:center;
+    font-size:9px; color:#8a9a8a; padding:0 4px; line-height:1.3; }
+  .petStatLine .stars { color:#f5a03c; letter-spacing:-1px; font-size:9px; }
+  .petStatSub { font-size:8.5px; color:#6a9ad0; padding:0 4px 1px; line-height:1.25;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .petLv { position:absolute; top:3px; right:6px; font-size:11px; color:#c0a020; }
+  .eqMark { position:absolute; top:2px; left:6px; font-size:11px; }
+
   /* ---------- 강화 상점 ---------- */
   .upRow { display:flex; align-items:center; gap:8px; background:#f2f7ee; border-radius:14px;
     padding:9px 10px; margin-bottom:8px; text-align:left; }
@@ -123,7 +151,11 @@
   <div id="homeBtns">
     <button class="btn green big" id="btnStart">모험 시작!</button>
     <div class="miniRow">
-      <button class="btn mini" style="background:#f5a03c;" id="btnUpgrade">✨ 강화 상점</button>
+      <button class="btn mini" style="background:#5aa9e6;" id="btnChars">👧 캐릭터</button>
+      <button class="btn mini" style="background:#6cc24a;" id="btnPets">🐾 소환수</button>
+      <button class="btn mini" style="background:#f5a03c;" id="btnUpgrade">✨ 강화</button>
+    </div>
+    <div class="miniRow">
       <button class="btn mini" id="btnBackup">기기 이동 코드</button>
       <button class="btn mini" id="btnSound">소리: 켬</button>
     </div>
@@ -154,6 +186,39 @@
       <button class="btn green" id="btnRetry">다시 달리기</button>
       <button class="btn blue" id="btnHome">홈으로</button>
     </div>
+  </div>
+</div>
+
+<!-- 캐릭터 -->
+<div id="charModal" class="overlay modal hidden">
+  <div class="card" style="max-height:84vh; overflow-y:auto;">
+    <h2>👧 캐릭터</h2>
+    <div class="tip">달린 거리만큼 경험치가 쌓여요. Lv.5 / 15 / 25에서 모습이 진화!</div>
+    <div id="charList"></div>
+    <button class="btn gray" id="btnCharClose">닫기</button>
+  </div>
+</div>
+
+<!-- 소환수 -->
+<div id="petModal" class="overlay modal hidden">
+  <div class="card" style="max-height:84vh; overflow-y:auto;">
+    <h2>🐾 소환수</h2>
+    <div id="petStars" style="font-size:19px; color:#e66a00;">⭐ 0</div>
+    <div id="pullResult" class="tip" style="min-height:18px;"></div>
+    <button class="btn green" id="btnPull">소환하기 (⭐150)</button>
+    <div class="tip" id="pityTip"></div>
+    <div class="tip">카드를 탭하면 장착/해제! 함께 달리면 능력이 발동돼요.<br>같은 친구를 또 만나면 강화(+4까지), 최대 강화 후엔 별 80개로 돌려받아요.</div>
+    <div class="tip" style="background:#eef4e8;border-radius:12px;padding:7px 9px;line-height:1.5;">
+      <b>등급이 높을수록 강해요!</b> 능력(활강·비행·점프)과 패시브가 함께 올라가요.<br>
+      <span style="color:#9aa5b1;font-weight:bold;">B</span> ›
+      <span style="color:#6cc24a;font-weight:bold;">A</span> ›
+      <span style="color:#5aa9e6;font-weight:bold;">S</span> ›
+      <span style="color:#b8a6e8;font-weight:bold;">SS</span> ›
+      <span style="color:#ffb020;font-weight:bold;">SSS</span>
+      &nbsp;— 예: 활강 낙하억제 A→SSS로 갈수록 훨씬 부드러워요.
+    </div>
+    <div id="petGrid"></div>
+    <button class="btn gray" id="btnPetClose">닫기</button>
   </div>
 </div>
 
@@ -257,6 +322,102 @@ const UPGRADES = {
             eff:l=>'+' + (l*4) + '%' },
 };
 function upgCost(key, lv){ return Math.round(UPGRADES[key].base * Math.pow(2.1, lv)); }
+const OUT = '#41281c';               // 만화풍 테두리 선 (모든 캐릭터/소환수/장식 공용)
+// ---- 소환수 카탈로그 ----
+const GRADE_COL = { B:'#9aa5b1', A:'#6cc24a', S:'#5aa9e6', SS:'#b8a6e8', SSS:'#ffb020' };
+const GRADE_ORDER = ['B','A','S','SS','SSS'];
+const PULL_COST = 150;
+// ab: jump3(3단 점프) / glide(활강: pw=낙하속도, 낮을수록 좋음) / float(비행: pw=비행 시간)
+// 능력 pw는 등급별 계단식으로 통일: jump3(점프힘) 높을수록↑ / glide(낙하상한) 낮을수록↑ / float(비행초) 높을수록↑
+// 패시브 총합도 등급 목표치에 맞춤: B≈8, A≈14, S≈22, SS≈32, SSS≈46
+const PETS = [
+  { id:'kong',   name:'콩콩',   grade:'B',   ab:'jump3', pw:0.80, animal:'frog',    c1:'#8bc34a', c2:'#689f38', bonus:{star:8} },
+  { id:'doto',   name:'도토',   grade:'B',   ab:'jump3', pw:0.80, animal:'squirrel',c1:'#c8814a', c2:'#9a5f33', bonus:{wing:8} },
+  { id:'bangul', name:'방울',   grade:'B',   ab:'jump3', pw:0.80, animal:'chick',   c1:'#7ab8e8', c2:'#5590c0', bonus:{fever:8} },
+  { id:'pudding',name:'푸딩',   grade:'B',   ab:'jump3', pw:0.80, animal:'puppy',   c1:'#f5d76e', c2:'#c8a840', bonus:{score:4} },
+  { id:'napul',  name:'나풀',   grade:'A',   ab:'glide', pw:340,  animal:'fairy',   c1:'#f78fb3', c2:'#d4608a', bonus:{star:14} },
+  { id:'somsom', name:'솜솜',   grade:'A',   ab:'glide', pw:340,  animal:'sheep',   c1:'#e8f4ff', c2:'#9fc8e8', bonus:{fever:14} },
+  { id:'barami', name:'바람이', grade:'A',   ab:'jump3', pw:0.90, animal:'fox',     c1:'#f0f0f0', c2:'#b8b8c8', bonus:{score:7} },
+  { id:'lulu',   name:'루루',   grade:'A',   ab:'glide', pw:340,  animal:'owl',     c1:'#ba9ae8', c2:'#9a78cc', bonus:{wing:14} },
+  { id:'byeol',  name:'별똥이', grade:'S',   ab:'jump3', pw:1.05, animal:'cat',     c1:'#ffd94e', c2:'#d0a020', bonus:{score:11, star:11} },
+  { id:'gureum', name:'구름이', grade:'S',   ab:'glide', pw:250,  animal:'whale',   c1:'#9fd8ff', c2:'#6aaede', bonus:{fever:22} },
+  { id:'ddalgi', name:'딸기용', grade:'S',   ab:'float', pw:0.9,  animal:'dragon',  c1:'#ff8a80', c2:'#d05a50', bonus:{wing:22} },
+  { id:'cheon',  name:'천둥이', grade:'SS',  ab:'jump3', pw:1.20, animal:'wolf',    c1:'#5aa9e6', c2:'#3a7ab8', bonus:{score:16, wing:16} },
+  { id:'eunha',  name:'은하수', grade:'SS',  ab:'glide', pw:170,  animal:'pegasus', c1:'#eef0fa', c2:'#a8b0d8', bonus:{star:16, fever:16} },
+  { id:'bulkko', name:'불꽃이', grade:'SS',  ab:'float', pw:1.3,  animal:'phoenix', c1:'#ff9f2e', c2:'#e06a20', bonus:{score:16, fever:16} },
+  { id:'lumen',  name:'루멘',   grade:'SSS', ab:'float', pw:1.9,  animal:'unicorn', c1:'#fff8e8', c2:'#e0be5a', bonus:{score:23, star:23} },
+  { id:'mir',    name:'미르',   grade:'SSS', ab:'glide', pw:110,  animal:'mirdragon', c1:'#8ce0c8', c2:'#50b090', bonus:{score:16, wing:15, fever:15} },
+];
+const PET_BY_ID = {};
+for (const pt of PETS) PET_BY_ID[pt.id] = pt;
+// ---- 캐릭터 카탈로그: 미션으로 해금, 레벨업으로 성장 (5/15/25 레벨에 모습 진화) ----
+const CHARS = [
+  { id:'rico', name:'리코', role:'보물사냥꾼', style:'rico',
+    bonus:{star:10}, passiveText:'별 점수 +10%', unlock:null },
+  { id:'luna', name:'루나', role:'견습 마법사', style:'luna',
+    bonus:{fever:15}, passiveText:'피버 충전 +15%', unlock:{ key:'lifeStars', need:1500, text:'별을 누적 1,500개 모으기' } },
+  { id:'supi', name:'숲이', role:'숲의 파수꾼', style:'supi',
+    bonus:{wing:25}, passiveText:'날개별 점수 +25%', unlock:{ key:'stomps', need:100, text:'몬스터 100마리 밟기' } },
+];
+const CHAR_BY_ID = {};
+for (const ch of CHARS) CHAR_BY_ID[ch.id] = ch;
+function charExpNeed(lv){ return Math.round(140 * Math.pow(lv, 1.6)); }   // 다음 레벨까지 필요한 거리(m)
+function charTier(lv){ return lv >= 25 ? 3 : lv >= 15 ? 2 : lv >= 5 ? 1 : 0; }
+const CHAR_STYLE = {
+  rico: { jacket:'#e04b4b', jdark:'#c23a3a', scarf:'#e64a4a', scarfD:'#b83838', shorts:'#b09050', hair:'#f6c445', hairD:'#d89e2e', head:'buns' },
+  luna: { jacket:'#8a76d8', jdark:'#6f5cc0', scarf:'#b8a6e8', scarfD:'#9a84cc', shorts:'#5e548e', hair:'#f2f2f8', hairD:'#c8c8dc', head:'hood' },
+  supi: { jacket:'#b09050', jdark:'#96793c', scarf:'#4ea86a', scarfD:'#3a8a52', shorts:'#7a5a3b', hair:'#f7f7f2', hairD:'#c8c8bc', head:'spiky' },
+};
+const AB_NAME = { jump3:'3단 점프', glide:'활강', float:'비행' };
+// 강화 레벨(중복 소환)당: 패시브 +15%씩, 능력도 소폭 향상
+function petAbilityPw(def, lv){
+  const l = (lv || 1) - 1;
+  if (def.ab === 'jump3') return def.pw + l * 0.03;
+  if (def.ab === 'glide') return Math.max(90, def.pw - l * 8);
+  return def.pw + l * 0.12;                     // float: 비행 시간 증가
+}
+function petBonusOf(def, lv, key){
+  const base = (def.bonus && def.bonus[key]) || 0;
+  return base * (1 + ((lv || 1) - 1) * 0.15);
+}
+// 패시브 총합 (Lv 반영)
+function petBonusTotal(def, lv){
+  let s = 0;
+  for (const k of ['star','score','fever','wing']) s += petBonusOf(def, lv, k);
+  return Math.round(s);
+}
+// 능력 성능을 사람이 읽는 수치(0~99, 높을수록 강함)로 환산
+function petPowerScore(def, lv){
+  const pw = petAbilityPw(def, lv);
+  if (def.ab === 'jump3') return Math.round((pw - 0.6) / 0.9 * 99);      // 0.60~1.50
+  if (def.ab === 'glide') return Math.round((380 - pw) / 300 * 99);      // 380(약)~80(강)
+  return Math.round((pw - 0.6) / 1.6 * 99);                             // 0.60~2.20 비행초
+}
+// 별점(1~5): 등급 기준 + 능력/패시브 미세 반영
+const GRADE_STARS = { B:1, A:2, S:3, SS:4, SSS:5 };
+function petStars(def){ return GRADE_STARS[def.grade]; }
+function petPassiveStars(def){
+  const total = petBonusTotal(def, 1);
+  return Math.max(1, Math.min(5, Math.round(total / 10)));               // 총합 10당 별 1개
+}
+function starStr(n){ return '★'.repeat(n) + '☆'.repeat(5 - n); }
+// 패시브 요약 텍스트 (예: 별+14% · 피버+8%)
+const BONUS_LABEL = { star:'별', score:'점수', fever:'피버', wing:'날개별' };
+function petPassiveSummary(def, lv){
+  const parts = [];
+  for (const k of ['score','star','wing','fever']){
+    const v = Math.round(petBonusOf(def, lv, k));
+    if (v > 0) parts.push(BONUS_LABEL[k] + '+' + v + '%');
+  }
+  return parts.join(' · ') || '-';
+}
+// 능력 상세 텍스트
+function petAbilityDetail(def, lv){
+  const pw = petAbilityPw(def, lv);
+  if (def.ab === 'jump3') return '점프력 ×' + pw.toFixed(2);
+  if (def.ab === 'glide') return '낙하 억제 ' + petPowerScore(def, lv);
+  return '비행 ' + pw.toFixed(1) + '초';
+}
 // ---- 클래스 레벨: 누적 달린 거리 = 영구 점수 보너스 (레벨당 +1%, 최대 30) ----
 function classLevel(totalM){
   let lv = 0;
@@ -279,6 +440,13 @@ function freshMeta(){
     bestScore: 0,      // 최고 점수
     stars: 0,          // 모은 별 (재화: 강화 상점에서 사용)
     up: { dash:0, magnet:0, giant:0, flight:0, fever:0, shield:0, score:0 },
+    pets: {},          // { 소환수id: 강화레벨(1~5) }
+    equipped: null,    // 장착한 소환수 id
+    pity: 0,           // 뽑기 천장 카운터 (S 미만 연속 횟수)
+    chars: { rico: { lv:1, exp:0 } },   // 보유 캐릭터와 성장
+    charEq: 'rico',    // 장착 캐릭터
+    lifeStars: 0,      // 누적 수집 별 (미션용)
+    stomps: 0,         // 누적 몬스터 밟기 (미션용)
     totalM: 0,         // 누적 달린 거리 (클래스 레벨 재료)
     plays: 0,
     sound: true,
@@ -289,8 +457,13 @@ let META = freshMeta();
 function applyLoadedMeta(d){
   // 원본 d를 기준으로 마이그레이션을 판단한다 (기본값 병합 후에는 감지 불가)
   const m = Object.assign(freshMeta(), d || {});
-  // 중첩 객체(up)는 따로 병합: 예전 저장에 없던 강화 항목을 0으로 채움
+  // 중첩 객체는 따로 병합: 예전 저장에 없던 항목을 기본값으로 채움
   m.up = Object.assign(freshMeta().up, (d && d.up) || {});
+  m.pets = (d && d.pets) || {};
+  if (m.equipped && !PET_BY_ID[m.equipped]) m.equipped = null;
+  m.chars = (d && d.chars) || {};
+  if (!m.chars.rico) m.chars.rico = { lv:1, exp:0 };
+  if (!m.charEq || !m.chars[m.charEq] || !CHAR_BY_ID[m.charEq]) m.charEq = 'rico';
   m.v = 1;
   META = m;
 }
@@ -401,6 +574,11 @@ function freshRun(){
     fever: { g:0, active:false, t:0, dur:6, untilX:0 },
     shields: 0,
     classLvAtStart: 0,
+    pet: null,               // { def, lv, pw } 장착 소환수
+    char: null,              // { def, lv } 장착 캐릭터
+    stomps: 0,               // 이번 판 밟은 몬스터 수
+    petStam: 0,              // 비행 소환수 남은 비행 시간
+    gliding: false,          // 활강 중 (연출용)
     eff: { magnet:0, giant:0, flight:0, invuln:0, dash:0 },
     speedExtra: 0,
     particles: [],
@@ -477,7 +655,7 @@ function pickItemType(x, st){
   return st >= 1 ? 'flight' : 'magnet';
 }
 function spawnWing(x, y, gold){
-  const pts = gold ? 100 : WING_PTS[RUN.stage];
+  const pts = Math.round((gold ? 100 : WING_PTS[RUN.stage]) * (1 + (petBonus('wing') + charPassive('wing')) / 100));
   RUN.wingStars.push({ x, y, vy: -180 - hash1(x)*80, pts, gold, t:0, got:false });
 }
 
@@ -609,28 +787,44 @@ function genAhead(){
 function tryJump(){
   if (scene !== 'run' || paused || !RUN || RUN.player.dead) return;
   const p = RUN.player;
+  const maxAir = (RUN.pet && RUN.pet.def.ab === 'jump3') ? 3 : 2;   // 3단 점프 소환수
   if (p.onGround){
     p.vy = JUMP_V; p.onGround = false; p.air = 1; SFX.jump();
     puff(PLAYER_SX(), p.y, '#ffffff', 5);
-  } else if (p.air < 2){
-    p.vy = JUMP_V2; p.air = 2; SFX.jump2();
-    puff(PLAYER_SX(), p.y - 20, '#cdeaff', 7);
+  } else if (p.air < maxAir){
+    const third = p.air >= 2;
+    p.vy = JUMP_V2 * (third ? RUN.pet.pw : 1);
+    p.air += 1;
+    third ? SFX.wing() : SFX.jump2();
+    puff(PLAYER_SX(), p.y - 20, third ? '#fff2b0' : '#cdeaff', 7);
   }
 }
+let HOLD = false;                 // 누르고 있는 중 (활강/비행)
 window.addEventListener('pointerdown', (e)=>{
   if (e.target.closest && e.target.closest('button, .card, textarea')) return;
   if (audio() && AC.state === 'suspended') AC.resume();
+  HOLD = true;
   tryJump();
 });
+window.addEventListener('pointerup', ()=>{ HOLD = false; });
+window.addEventListener('pointercancel', ()=>{ HOLD = false; });
 window.addEventListener('keydown', (e)=>{
-  if (e.code === 'Space' || e.code === 'ArrowUp'){ e.preventDefault(); tryJump(); }
+  if (e.code === 'Space' || e.code === 'ArrowUp'){
+    e.preventDefault();
+    if (!e.repeat) tryJump();
+    HOLD = true;
+  }
+});
+window.addEventListener('keyup', (e)=>{
+  if (e.code === 'Space' || e.code === 'ArrowUp') HOLD = false;
 });
 window.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('visibilitychange', ()=>{
+  HOLD = false;
   if (document.hidden && scene === 'run' && !paused) doPause(true);
   if (document.hidden) saveMeta();
 });
-window.addEventListener('blur', ()=>{ if (scene==='run' && !paused) doPause(true); });
+window.addEventListener('blur', ()=>{ HOLD = false; if (scene==='run' && !paused) doPause(true); });
 
 /* ---------------- [파티클/연출] ---------------- */
 function puff(sx, y, col, n){
@@ -738,6 +932,20 @@ function update(dt){
     if (E.flight === 0){ E.invuln = Math.max(E.invuln, 1.2); p.vy = 60; }
   } else {
     p.vy += GRAV * dt;
+    // 소환수 능력: 활강 / 비행 (누르고 있는 동안)
+    R.gliding = false;
+    if (R.pet && !p.onGround && HOLD){
+      if (R.pet.def.ab === 'glide' && p.vy > 0){
+        if (p.vy > R.pet.pw){ p.vy = R.pet.pw; }
+        R.gliding = true;
+        if (Math.random() < 0.25) sparkle(px - 24, p.y - 10, '#ffffff');
+      } else if (R.pet.def.ab === 'float' && R.petStam > 0){
+        p.vy = Math.max(p.vy - 5200 * dt, -300);
+        R.petStam = Math.max(0, R.petStam - dt);
+        R.gliding = true;
+        if (Math.random() < 0.4) sparkle(px - 22, p.y + 4, '#ffe8a8');
+      }
+    }
   }
   const prevY = p.y;
   if (E.flight <= 0) p.y += p.vy * dt;
@@ -752,6 +960,8 @@ function update(dt){
       } else p.onGround = false;
     } else p.onGround = false;
   }
+  // 비행 소환수: 땅에 있으면 즉시 재충전
+  if (p.onGround && R.pet && R.pet.def.ab === 'float') R.petStam = R.pet.pw;
 
   // 추락사
   if (p.y > H + 80) die('fall');
@@ -783,13 +993,13 @@ function update(dt){
     if (Math.abs(s.x - px) < 34 && Math.abs(s.y - (p.y - PH*0.5)) < 46){
       s.got = true;
       const tier = STAR_TIERS[s.tier];
-      R.gained += tier.pts;
+      R.gained += Math.round(tier.pts * (1 + (petBonus('star') + charPassive('star')) / 100));
       R.starsGot += 1;
       R.combo += 1; R.comboT = .9;
       SFX.star(R.combo);
       sparkle(s.x, s.y, tier.col);
       // 피버 게이지 충전 (단계가 높을수록 더 많은 별 필요)
-      if (!R.fever.active) R.fever.g = Math.min(1, R.fever.g + 1 / (42 + R.stage * 12));
+      if (!R.fever.active) R.fever.g = Math.min(1, R.fever.g + (1 + (petBonus('fever') + charPassive('fever'))/100) / (42 + R.stage * 12));
       const set = R.sets[s.set];
       if (set){
         set.got += 1; set.pts += tier.pts;
@@ -870,7 +1080,10 @@ function update(dt){
   // HUD
   document.getElementById('tScore').textContent = fmt(curScore());
   document.getElementById('tDist').textContent = Math.floor(R.distM);
-  document.getElementById('tStars').textContent = '⭐ ' + R.starsGot + (R.shields > 0 ? ' 🛡️×' + R.shields : '');
+  let sub = '⭐ ' + R.starsGot;
+  if (R.shields > 0) sub += ' 🛡️×' + R.shields;
+  if (R.pet && R.pet.def.ab === 'float') sub += ' 🪽' + R.petStam.toFixed(1);
+  document.getElementById('tStars').textContent = sub;
   const fb = document.getElementById('feverBar'), ff = document.getElementById('feverFill');
   if (R.fever.active){
     fb.classList.add('full');
@@ -907,9 +1120,21 @@ function updateParticles(dt){
   }
   R.confetti = R.confetti.filter(c => c.y < H + 30 && c.t < 6);
 }
+function petBonus(key){
+  if (!RUN || !RUN.pet) return 0;
+  return petBonusOf(RUN.pet.def, RUN.pet.lv, key);
+}
+function charPassive(key){
+  if (!RUN || !RUN.char) return 0;
+  return (RUN.char.def.bonus && RUN.char.def.bonus[key]) || 0;
+}
 function scoreMult(){
   const lv = RUN ? RUN.classLvAtStart : classLevel(META.totalM);
-  return 1 + lv * 0.01 + (META.up.score || 0) * 0.04;
+  const chLv = (RUN && RUN.char) ? RUN.char.lv : ((META.chars && META.chars[META.charEq]) ? META.chars[META.charEq].lv : 1);
+  return 1 + lv * 0.01 + (META.up.score || 0) * 0.04
+       + petBonus('score') / 100                    // 소환수 패시브
+       + (chLv - 1) * 0.005                         // 캐릭터 레벨: 레벨당 +0.5%
+       + ownedPetCount() * 0.005;                   // 도감 보너스: 보유 1종당 +0.5%
 }
 function curScore(){
   return Math.floor((RUN.distM * 10 + RUN.gained) * scoreMult());
@@ -918,6 +1143,7 @@ function fmt(n){ return n.toLocaleString('ko-KR'); }
 
 function destroyMonster(m, viaStomp){
   m.dead = true; m.deadT = 0;
+  if (viaStomp) RUN.stomps += 1;
   const pts = m.gold ? MONSTER_PTS*2 : MONSTER_PTS;
   RUN.gained += pts;
   SFX.stomp(); sparkle(m.x, m.y-24, m.gold ? '#ffe066' : '#ffb84e');
@@ -1134,7 +1360,7 @@ function render(){
     drawWingStar(sx, ws.y, ws, R.t);
   }
 
-  // ----- 플레이어 (거인/비행/무적 연출 포함) -----
+  // ----- 플레이어 (+소환수 탑승, 거인/비행/무적 연출 포함) -----
   const E2 = R.eff;
   if (E2.flight > 0){
     ctx.fillStyle = 'rgba(180,225,255,0.35)';
@@ -1146,7 +1372,14 @@ function render(){
     if (E2.giant < 1 && Math.floor(R.t*14)%2===0) psc = 1.15;   // 끝나기 직전 깜빡임
   }
   if (E2.invuln > 0 && Math.floor(R.t*16)%2===0) ctx.globalAlpha = 0.55;
-  drawPlayer(PLAYER_SX(), R.player.y, R.t, R.player, psc);
+  let riderY = R.player.y;
+  if (R.pet){
+    drawPet(PLAYER_SX() - 2, R.player.y, R.t,
+      { onGround:R.player.onGround, gliding:R.gliding, dead:R.player.dead, anim:R.player.anim },
+      R.pet, 1.1);
+    riderY -= PET_BACK;                          // 신수의 안장(등 파인 곳)에 앉기
+  }
+  drawPlayer(PLAYER_SX() + (R.pet ? -6 : 0), riderY, R.t, R.player, psc, { riding: !!R.pet });
   ctx.globalAlpha = 1;
 
   // ----- 피버 황금빛 오버레이 -----
@@ -1237,6 +1470,592 @@ function drawStar(x,y,r,tier){
   ctx.beginPath(); ctx.arc(-r*0.25, -r*0.3, r*0.16, 0, 7); ctx.fill();
   ctx.restore();
 }
+/* ==== 소환수 그리기 v3: 디즈니/픽사 문법 (큰 머리, 풍부한 눈, S커브 실루엣, 2톤 음영, 대등한 네 다리+허벅지) ==== */
+const PET_STYLE = {
+  frog:      { kind:'quad', ear:'frogeyes', snout:'wide',  tail:'nub',    extra:'spots' },
+  squirrel:  { kind:'quad', ear:'round',    snout:'round', tail:'bushy' },
+  chick:     { kind:'bird', crest:'tuft',   tail:'feathers' },
+  puppy:     { kind:'quad', ear:'floppy',   snout:'round', tail:'wag' },
+  fairy:     { kind:'quad', ear:'point',    snout:'round', tail:'nub',    horn:'antler', wing:'butterfly', mc:'#ffb8d0' },
+  sheep:     { kind:'quad', ear:'side',     snout:'round', tail:'puff',   mane:'wool',  mc:'#ffffff' },
+  fox:       { kind:'quad', ear:'point',    snout:'sharp', tail:'bushy',  extra:'tailtip' },
+  owl:       { kind:'bird', crest:'horns',  tail:'feathers' },
+  cat:       { kind:'quad', ear:'point',    snout:'round', tail:'long',   mane:'zag', mc:'#ffe98a' },
+  whale:     { kind:'float' },
+  dragon:    { kind:'quad', ear:null,       snout:'round', tail:'spade',  horn:'twin',   wing:'bat',     extra:'spikes' },
+  wolf:      { kind:'quad', ear:'point',    snout:'sharp', tail:'bushy',  mane:'zag',    mc:'#a8e0ff' },
+  pegasus:   { kind:'quad', ear:'point',    snout:'long',  tail:'flow',   mane:'hair',   wing:'feather', mc:'#c8cce8' },
+  phoenix:   { kind:'bird', crest:'flame',  tail:'flame',  wing:'feather', mc:'#ffd94e' },
+  unicorn:   { kind:'quad', ear:'point',    snout:'long',  tail:'flame',  mane:'flame',  horn:'spiral',  mc:'#ffb020' },
+  mirdragon: { kind:'quad', ear:'fin',      snout:'round', tail:'flow',   mane:'flame',  horn:'antler',  extra:'spikes', whiskers:true, mc:'#c8f5e0' },
+};
+const PET_BACK = 31;                 // 라이더가 앉는 등 높이
+
+function petMix(hex, f, toWhite){    // f=0..1 흰색/검정 쪽으로 혼합
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n>>16)&255, g = (n>>8)&255, b = n&255;
+  const T = toWhite ? 255 : 0;
+  return 'rgb(' + Math.round(r+(T-r)*f) + ',' + Math.round(g+(T-g)*f) + ',' + Math.round(b+(T-b)*f) + ')';
+}
+
+function drawPet(sx, footY, t, st, pet, scale){
+  const def = pet.def;
+  const sty = PET_STYLE[def.animal] || PET_STYLE.puppy;
+  const run = st.onGround && !st.dead;
+  const a = (st.anim || 0) * 2.2;
+  const bob = run ? Math.abs(Math.sin(a)) * 2 : 0;
+  const mc = sty.mc || def.c2;
+  const c1 = def.c1;
+  const LIT = petMix(c1, 0.5, true);        // 배 (밝게)
+  const DRK = petMix(c1, 0.16, false);      // 등/음영 (살짝 어둡게)
+  const FAR = petMix(c1, 0.22, false);      // 먼 다리
+
+  ctx.save();
+  ctx.translate(sx, footY);
+  ctx.scale(scale || 1, scale || 1);
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  function oF(col, lw){ ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = OUT; ctx.lineWidth = lw || 2.2; ctx.stroke(); }
+
+  /* ---------- 떠다니는 소환수 (구름 고래) ---------- */
+  if (sty.kind === 'float'){
+    const hov = -8 + Math.sin(t * 3) * 3;
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.beginPath(); ctx.ellipse(0, 3, 26, 5, 0, 0, 7); ctx.fill();
+    ctx.translate(0, hov);
+    // 꼬리 지느러미 (부드러운 하트형)
+    ctx.save();
+    ctx.translate(-29, -25); ctx.rotate(Math.sin(t*5) * 0.22);
+    ctx.beginPath();
+    ctx.moveTo(2, 3);
+    ctx.quadraticCurveTo(-10, -2, -13, -10);
+    ctx.quadraticCurveTo(-7, -8, -3, -3);
+    ctx.quadraticCurveTo(-8, 4, -12, 10);
+    ctx.quadraticCurveTo(-4, 9, 2, 3);
+    ctx.closePath(); oF(c1, 2.2);
+    ctx.restore();
+    // 몸통 (물방울 곡선)
+    ctx.beginPath();
+    ctx.moveTo(-28, -22);
+    ctx.quadraticCurveTo(-26, -40, 2, -42);
+    ctx.quadraticCurveTo(27, -41, 31, -26);
+    ctx.quadraticCurveTo(32, -12, 12, -10);
+    ctx.quadraticCurveTo(-15, -8, -28, -17);
+    ctx.closePath(); oF(c1, 2.5);
+    // 등 음영
+    ctx.fillStyle = 'rgba(0,0,30,0.10)';
+    ctx.beginPath();
+    ctx.moveTo(-26, -33); ctx.quadraticCurveTo(0, -44, 28, -33);
+    ctx.quadraticCurveTo(0, -38, -26, -33); ctx.closePath(); ctx.fill();
+    // 밝은 배
+    ctx.fillStyle = petMix(c1, 0.62, true);
+    ctx.beginPath(); ctx.ellipse(3, -15, 23, 7, 0.03, 0, 7); ctx.fill();
+    ctx.strokeStyle = 'rgba(106,174,222,0.55)'; ctx.lineWidth = 1.3;
+    for (let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(-13+i*2, -19.5+i*3.2); ctx.lineTo(21-i*2, -19.5+i*3.2); ctx.stroke(); }
+    // 등지느러미 + 옆 지느러미
+    ctx.beginPath();
+    ctx.moveTo(-8, -40); ctx.quadraticCurveTo(-6, -47, 0, -46); ctx.quadraticCurveTo(-2, -42, -2, -39.5);
+    ctx.closePath(); oF(c1, 2);
+    ctx.save(); ctx.translate(7, -13); ctx.rotate(0.45 + Math.sin(t*6)*0.15);
+    ctx.beginPath(); ctx.ellipse(4, 0, 9.5, 4.2, 0, 0, 7); oF(c1, 2); ctx.restore();
+    // 물줄기
+    ctx.strokeStyle = '#bfe6ff'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(13, -42); ctx.quadraticCurveTo(12, -48, 9, -50); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(13, -42); ctx.quadraticCurveTo(15, -48, 18, -49); ctx.stroke();
+    ctx.fillStyle = '#dff2ff';
+    ctx.beginPath(); ctx.arc(9, -51, 2, 0, 7); ctx.arc(18, -50, 1.7, 0, 7); ctx.fill();
+    petEye(21, -28, 1.15, false, t);
+    ctx.fillStyle = 'rgba(255,140,140,0.45)';
+    ctx.beginPath(); ctx.ellipse(26, -21, 2.6, 1.6, 0.3, 0, 7); ctx.fill();
+    ctx.strokeStyle = OUT; ctx.lineWidth = 1.7;
+    ctx.beginPath(); ctx.arc(27, -25, 3.2, 0.6, Math.PI - 1.0); ctx.stroke();
+    if (def.grade === 'SSS' || def.grade === 'SS') petAura(t);
+    ctx.restore();
+    return;
+  }
+
+  /* ---------- 공통 준비 ---------- */
+  if (!st.dead && st.onGround){
+    ctx.fillStyle = 'rgba(0,0,0,0.14)';
+    ctx.beginPath(); ctx.ellipse(0, 5, 28, 5.5, 0, 0, 7); ctx.fill();
+  }
+  ctx.translate(0, -bob);
+  if (!st.onGround) ctx.rotate(st.gliding ? -0.08 : -0.12);
+  else if (run) ctx.rotate(Math.sin(a) * 0.03);            // 갤럽 리듬에 맞춘 몸 흔들림
+
+  /* ---------- 네 다리 (앞뒤 완전히 같은 길이: 엉덩이선 -19 -> 지면 0) ---------- */
+  function quadLeg(x0, ph, col, hind){
+    let kx, ky, fx, fy;
+    if (run){
+      const s = Math.sin(ph);
+      const lift = Math.max(0, Math.cos(ph)) * 7;
+      fx = x0 + s * 12; fy = -lift;
+      kx = x0 + s * 6 + (hind ? -2.5 : 1.5);               // 뒷다리 무릎은 뒤로, 앞다리는 앞으로
+      ky = -10 - lift * 0.3;
+    } else if (st.dead){ kx = x0 + 2; ky = -9; fx = x0 + 4; fy = -1; }
+    else { fx = x0 + (hind ? -4 : 2); fy = -7; kx = x0 + (hind ? -3.5 : 2); ky = -12; }  // 점프: 다리 접기
+    ctx.strokeStyle = OUT; ctx.lineWidth = 8.8;
+    ctx.beginPath(); ctx.moveTo(x0, -19); ctx.quadraticCurveTo(kx, ky, fx, fy - 3.2); ctx.stroke();
+    ctx.strokeStyle = col || c1; ctx.lineWidth = 5.4;
+    ctx.beginPath(); ctx.moveTo(x0, -19); ctx.quadraticCurveTo(kx, ky, fx, fy - 3.2); ctx.stroke();
+    // 발 (둥글고 통통하게 + 발가락 선)
+    ctx.beginPath(); ctx.ellipse(fx + 1.2, fy - 2.4, 4.8, 3.5, 0, 0, 7); oF(col || c1, 2);
+    ctx.strokeStyle = 'rgba(0,0,0,0.28)'; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.moveTo(fx + 1.5, fy - 4.6); ctx.lineTo(fx + 1.5, fy - 1.2);
+    ctx.moveTo(fx + 3.8, fy - 4.2); ctx.lineTo(fx + 3.8, fy - 1.4); ctx.stroke();
+  }
+
+  /* ---------- 새 형태 ---------- */
+  if (sty.kind === 'bird'){
+    const flame = sty.tail === 'flame';
+    // 꼬리깃 (부채꼴 3장)
+    for (let i=0;i<3;i++){
+      ctx.save();
+      ctx.translate(-13, -21 + i*2.5);
+      ctx.rotate(0.32 + i*0.26 + Math.sin(t*6+i)*0.05);
+      ctx.beginPath(); ctx.ellipse(-12, 0, 12.5, 4, 0, 0, 7);
+      oF(flame ? (i===1 ? '#ffd94e' : c1) : (i===1 ? mc : c1), 1.9);
+      if (flame){ ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.ellipse(-14, 0, 6, 1.7, 0, 0, 7); ctx.fill(); }
+      ctx.restore();
+    }
+    birdWing(-4, -25, st.gliding, t, FAR, mc);              // 먼 날개
+    // 다리 2개 (같은 길이)
+    for (const [ox, ph] of [[-3, a+Math.PI], [8, a]]){
+      const s = Math.sin(ph), lift = run ? Math.max(0, Math.cos(ph))*6 : 1;
+      ctx.strokeStyle = OUT; ctx.lineWidth = 6.6;
+      ctx.beginPath(); ctx.moveTo(ox, -10); ctx.lineTo(ox + (run ? s*7 : 1), -lift); ctx.stroke();
+      ctx.strokeStyle = '#e8a03c'; ctx.lineWidth = 3.8;
+      ctx.beginPath(); ctx.moveTo(ox, -10); ctx.lineTo(ox + (run ? s*7 : 1), -lift); ctx.stroke();
+      const fx = ox + (run ? s*7 : 1);
+      ctx.strokeStyle = OUT; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(fx-2.5, -lift); ctx.lineTo(fx+4, -lift); ctx.stroke();
+    }
+    // 몸통 (물방울, 가슴이 앞으로 봉긋)
+    ctx.beginPath();
+    ctx.moveTo(-16, -16);
+    ctx.quadraticCurveTo(-19, -33, -3, -38);
+    ctx.quadraticCurveTo(13, -42, 18, -28);
+    ctx.quadraticCurveTo(20, -14, 8, -8);
+    ctx.quadraticCurveTo(-8, -4, -16, -12);
+    ctx.closePath(); oF(c1, 2.5);
+    ctx.fillStyle = petMix(c1, 0.55, true);                 // 밝은 가슴
+    ctx.beginPath(); ctx.ellipse(4, -16, 10.5, 9, 0.15, 0, 7); ctx.fill();
+    // 머리 (크게: 픽사 비율)
+    ctx.beginPath(); ctx.arc(13, -42, 13, 0, 7); oF(c1, 2.5);
+    ctx.fillStyle = 'rgba(0,0,30,0.08)';
+    ctx.beginPath(); ctx.arc(13, -42, 13, -2.9, -0.3); ctx.lineTo(13, -42); ctx.closePath(); ctx.fill();
+    // 부리 (윗부리 곡선 + 아랫부리)
+    ctx.beginPath();
+    ctx.moveTo(24.5, -45);
+    ctx.quadraticCurveTo(33, -43, 25.5, -38.5);
+    ctx.quadraticCurveTo(23.5, -40.5, 23.5, -42);
+    ctx.closePath(); oF('#f0b030', 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath(); ctx.ellipse(27, -43.5, 2.2, 1, -0.3, 0, 7); ctx.fill();
+    // 볏/귀깃
+    if (sty.crest === 'flame'){
+      flameLobe(7, -56, 5, t*8, mc); flameLobe(13, -60, 6, t*8+1.2, '#ffd94e'); flameLobe(19, -55, 4.5, t*8+2.1, mc);
+    } else if (sty.crest === 'horns'){
+      for (const ox of [6, 19]){
+        ctx.beginPath(); ctx.moveTo(ox-3.5, -51); ctx.quadraticCurveTo(ox, -60, ox+3.5, -51);
+        ctx.closePath(); oF(def.c2, 1.8);
+      }
+    } else {
+      for (let i=0;i<2;i++){
+        ctx.save(); ctx.translate(11, -54); ctx.rotate(-0.5 + i*0.55 + Math.sin(t*5)*0.06);
+        ctx.beginPath(); ctx.ellipse(0, -4.5, 2.8, 6, 0, 0, 7); oF(mc, 1.7); ctx.restore();
+      }
+    }
+    petEye(16, -44, 1.25, false, t);
+    ctx.fillStyle = 'rgba(255,140,140,0.4)';
+    ctx.beginPath(); ctx.ellipse(21.5, -37, 2.4, 1.5, 0.3, 0, 7); ctx.fill();
+    birdWing(1, -23, st.gliding, t, '#ffffff', mc);          // 가까운 날개
+    if (def.grade === 'SSS' || def.grade === 'SS') petAura(t);
+    ctx.restore();
+    return;
+  }
+
+  /* ---------- 네발짐승 ---------- */
+  // 먼 다리 (앞뒤)
+  quadLeg(-17, a + Math.PI + 0.45, FAR, true);
+  quadLeg(19, a + 0.45, FAR, false);
+
+  petTail(sty, def, mc, t, c1);                             // 꼬리 (몸 뒤)
+  if (sty.wing) petWing(sty.wing, -6, -29, st.gliding, t, FAR, mc);   // 먼 날개
+
+  // 몸통 실루엣: 아치형 목 -> 안장 파임 -> 봉긋한 엉덩이 -> 배는 일직선 (다리가 대등하게 보임)
+  ctx.beginPath();
+  ctx.moveTo(-24, -26);
+  ctx.quadraticCurveTo(-19, -33, -8, -32);                  // 엉덩이 봉우리
+  ctx.quadraticCurveTo(0, -30.5, 7, -32);                   // 안장 파임
+  ctx.quadraticCurveTo(16, -35, 23, -31);                   // 어깨(기갑) 상승
+  ctx.quadraticCurveTo(28, -25, 26, -16);
+  ctx.quadraticCurveTo(23, -9.5, 12, -9);                   // 가슴 아래
+  ctx.quadraticCurveTo(0, -8.5, -12, -9);                   // 배 (수평 유지)
+  ctx.quadraticCurveTo(-22, -10, -24, -18);
+  ctx.closePath(); oF(c1, 2.5);
+  // 등 음영 (은은한 어두운 띠)
+  ctx.fillStyle = 'rgba(0,0,30,0.09)';
+  ctx.beginPath();
+  ctx.moveTo(-21, -27); ctx.quadraticCurveTo(0, -33, 21, -29);
+  ctx.quadraticCurveTo(0, -29, -21, -25); ctx.closePath(); ctx.fill();
+  // 밝은 배
+  ctx.fillStyle = LIT;
+  ctx.beginPath(); ctx.ellipse(1, -12.5, 17, 5.5, 0.02, 0, 7); ctx.fill();
+  // 뒷다리 허벅지 (네발짐승의 핵심 실루엣!)
+  ctx.beginPath(); ctx.ellipse(-13, -19, 9.5, 10.5, -0.15, 0, 7); oF(c1, 2.3);
+  ctx.fillStyle = 'rgba(0,0,30,0.07)';
+  ctx.beginPath(); ctx.ellipse(-15, -21, 6, 7, -0.15, 0, 7); ctx.fill();
+  // 앞다리 어깨 근육
+  ctx.beginPath(); ctx.ellipse(17.5, -20, 6.5, 8, 0.1, 0, 7); ctx.fillStyle = c1; ctx.fill();
+
+  // 등 돌기/점/줄무늬/양털
+  if (sty.extra === 'spikes'){
+    ctx.fillStyle = '#f2e3c4';
+    for (let i=0;i<3;i++){
+      ctx.beginPath();
+      ctx.moveTo(-14 + i*8, -30);
+      ctx.quadraticCurveTo(-11.5 + i*8, -37, -9 + i*8, -30);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = OUT; ctx.lineWidth = 1.6; ctx.stroke();
+    }
+  }
+  if (sty.extra === 'spots'){
+    ctx.fillStyle = 'rgba(0,0,30,0.13)';
+    ctx.beginPath(); ctx.arc(-10, -24, 3, 0, 7); ctx.arc(3, -27, 2.4, 0, 7); ctx.arc(13, -20, 2.1, 0, 7); ctx.fill();
+  }
+  if (sty.extra === 'stripes'){
+    ctx.strokeStyle = 'rgba(0,0,30,0.18)'; ctx.lineWidth = 2.6;
+    for (let i=0;i<3;i++){
+      ctx.beginPath(); ctx.moveTo(-14+i*9, -29); ctx.quadraticCurveTo(-11+i*9, -23, -14+i*9, -17); ctx.stroke();
+    }
+  }
+  if (sty.mane === 'wool'){
+    ctx.fillStyle = mc; ctx.strokeStyle = OUT; ctx.lineWidth = 1.8;
+    for (const [bx,by,r] of [[-17,-27,6.5],[-7,-31,7],[4,-30,6.5],[14,-32,6],[21,-28,5.5],[-12,-20,5.5]]){
+      ctx.beginPath(); ctx.arc(bx, by, r, 0, 7); ctx.fill(); ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    for (const [bx,by,r] of [[-15,-29,3.4],[-5,-33,3.8],[6,-32,3.4],[15,-34,3.2]]){
+      ctx.beginPath(); ctx.arc(bx, by, r, 0, 7); ctx.fill();
+    }
+  }
+
+  /* ---------- 아치형 목 + 큰 머리 ---------- */
+  const hx = 27, hy = -46;                                  // 머리를 높이 (당당한 자세)
+  ctx.fillStyle = c1;
+  ctx.beginPath();
+  ctx.moveTo(14, -30);
+  ctx.quadraticCurveTo(16, -40, 22, -46);
+  ctx.lineTo(31, -42);
+  ctx.quadraticCurveTo(27, -34, 26, -27);
+  ctx.closePath(); ctx.fill();                              // 목 (테두리 없이 몸과 연결)
+  // 갈기 (머리 뒤)
+  if (sty.mane === 'flame'){
+    flameLobe(hx - 12, hy - 8, 6.5, t*8, mc);
+    flameLobe(hx - 17, hy - 1, 5.5, t*8 + 1.1, '#ffd94e');
+    flameLobe(hx - 20, hy + 7, 4.8, t*8 + 2.2, mc);
+    flameLobe(hx - 21, hy + 15, 4, t*8 + 3.1, '#ffd94e');
+  } else if (sty.mane === 'hair'){
+    ctx.beginPath();
+    ctx.moveTo(hx - 3, hy - 12);
+    ctx.quadraticCurveTo(hx - 17, hy - 8 + Math.sin(t*5)*1.5, hx - 19, hy + 12);
+    ctx.quadraticCurveTo(hx - 12, hy + 9, hx - 9, hy + 1);
+    ctx.quadraticCurveTo(hx - 8, hy - 5, hx - 6, hy - 9);
+    ctx.closePath(); oF(mc, 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(hx - 8, hy - 7); ctx.quadraticCurveTo(hx - 14, hy - 2, hx - 15, hy + 7); ctx.stroke();
+  } else if (sty.mane === 'zag'){
+    ctx.fillStyle = mc;
+    for (let i=0;i<3;i++){
+      ctx.beginPath();
+      ctx.moveTo(hx - 9 - i*5, hy - 9 + i*6);
+      ctx.lineTo(hx - 16 - i*5, hy - 10 + i*6 + Math.sin(t*7+i)*1.2);
+      ctx.lineTo(hx - 10 - i*5, hy - 3 + i*6);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = OUT; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  }
+  // 머리 (크게, 주둥이 형태별)
+  if (sty.snout === 'long'){                                // 말/유니콘/페가수스
+    ctx.beginPath(); ctx.ellipse(hx + 1, hy - 1, 13, 10.5, -0.18, 0, 7); oF(c1, 2.4);
+    ctx.beginPath(); ctx.ellipse(hx + 12, hy + 2, 6, 5, -0.12, 0, 7); oF(petMix(c1, 0.3, true), 2);
+    ctx.fillStyle = OUT; ctx.beginPath(); ctx.arc(hx + 14.5, hy + 0.5, 1.1, 0, 7); ctx.fill();
+    ctx.strokeStyle = OUT; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(hx + 11, hy + 4.5, 2.6, 0.5, Math.PI - 1.4); ctx.stroke();
+  } else if (sty.snout === 'sharp'){                        // 여우/늑대
+    ctx.beginPath(); ctx.arc(hx, hy, 12, 0, 7); oF(c1, 2.4);
+    ctx.beginPath();
+    ctx.moveTo(hx + 6, hy - 2);
+    ctx.quadraticCurveTo(hx + 18, hy + 2, hx + 16.5, hy + 5.5);
+    ctx.quadraticCurveTo(hx + 8, hy + 8, hx + 4.5, hy + 5);
+    ctx.closePath(); oF(petMix(c1, 0.5, true), 2);
+    ctx.fillStyle = OUT; ctx.beginPath(); ctx.arc(hx + 16, hy + 3.5, 1.5, 0, 7); ctx.fill();
+    ctx.strokeStyle = OUT; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(hx + 9, hy + 6.5, 2.4, 0.7, Math.PI - 1.2); ctx.stroke();
+  } else if (sty.snout === 'wide'){                         // 개구리
+    ctx.beginPath(); ctx.ellipse(hx, hy + 1, 13.5, 10, 0, 0, 7); oF(c1, 2.4);
+    ctx.fillStyle = petMix(c1, 0.45, true);
+    ctx.beginPath(); ctx.ellipse(hx + 3, hy + 5, 8, 4.5, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = OUT; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.arc(hx + 4, hy + 3, 5.5, 0.35, Math.PI - 0.5); ctx.stroke();
+  } else {                                                  // 둥근 주둥이
+    ctx.beginPath(); ctx.arc(hx, hy, 12.5, 0, 7); oF(c1, 2.4);
+    ctx.fillStyle = petMix(c1, 0.5, true);
+    ctx.beginPath(); ctx.ellipse(hx + 6.5, hy + 4, 5.5, 4.3, 0.1, 0, 7); ctx.fill();
+    ctx.fillStyle = OUT; ctx.beginPath(); ctx.ellipse(hx + 8.5, hy + 0.5, 1.7, 1.3, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = OUT; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(hx + 7, hy + 4.5, 2.6, 0.5, Math.PI - 1.1); ctx.stroke();
+  }
+  // 머리 위 음영 (입체감)
+  ctx.fillStyle = 'rgba(0,0,30,0.06)';
+  ctx.beginPath(); ctx.arc(hx, hy, sty.snout==='long'?12:12, -2.8, -0.4); ctx.closePath(); ctx.fill();
+
+  petEars(sty, def, hx, hy, t, mc);
+  if (sty.whiskers){
+    ctx.strokeStyle = '#f2e3c4'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(hx + 10, hy + 1); ctx.quadraticCurveTo(hx + 18, hy + 3 + Math.sin(t*4)*2, hx + 22, hy + 9); ctx.stroke();
+  }
+  petEye(hx + 3, hy - 2, sty.snout === 'sharp' ? 1.05 : 1.15, sty.snout === 'sharp', t);
+  ctx.fillStyle = 'rgba(255,140,140,0.4)';
+  ctx.beginPath(); ctx.ellipse(hx + 9.5, hy + 6.5, 2.4, 1.5, 0.3, 0, 7); ctx.fill();
+
+  // 가까운 다리 (앞뒤)
+  quadLeg(-12, a + Math.PI, null, true);
+  quadLeg(16, a, null, false);
+  if (sty.wing) petWing(sty.wing, -2, -29, st.gliding, t, '#ffffff', mc);   // 가까운 날개
+
+  if (def.grade === 'SSS' || def.grade === 'SS') petAura(t);
+  ctx.restore();
+
+  function petAura(tt){
+    ctx.fillStyle = 'rgba(255,220,110,' + (0.45 + Math.sin(tt*7)*0.3) + ')';
+    for (let i=0;i<4;i++){
+      const aa = tt*2.5 + i*1.6;
+      ctx.beginPath(); ctx.arc(Math.cos(aa)*33, -24 + Math.sin(aa)*19, 1.9, 0, 7); ctx.fill();
+    }
+  }
+}
+
+/* 픽사풍 눈: 큰 홍채 + 이중 하이라이트 + 눈꺼풀 라인 */
+function petEye(ex, ey, sc, fierce, t){
+  ctx.save();
+  ctx.translate(ex, ey);
+  ctx.scale(sc, sc);
+  ctx.beginPath(); ctx.ellipse(0, 0, 4.4, 5.2, 0.05, 0, 7);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.strokeStyle = OUT; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = '#43301f';                                 // 큰 홍채 (따뜻한 갈색)
+  ctx.beginPath(); ctx.ellipse(0.7, 0.4, 3.3, 4, 0.05, 0, 7); ctx.fill();
+  ctx.fillStyle = '#1c120a';
+  ctx.beginPath(); ctx.arc(0.9, 1, 1.9, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(-0.4, -1.4, 1.5, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(1.8, 2.2, 0.7, 0, 7); ctx.fill();
+  // 눈꺼풀 (날카로운 짐승은 사선)
+  ctx.strokeStyle = OUT; ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  if (fierce){ ctx.moveTo(-4, -4.5); ctx.lineTo(4.5, -2.6); }
+  else { ctx.moveTo(-4, -3.6); ctx.quadraticCurveTo(0.5, -5.8, 4.6, -3.4); }
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* 화염 갈기 잎: 겉불꽃 + 밝은 속불꽃 */
+function flameLobe(x, y, r, ph, col){
+  const w = Math.sin(ph) * 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x - r, y + r);
+  ctx.quadraticCurveTo(x - r*1.25, y - r*0.5, x + w*0.4, y - r*2);
+  ctx.quadraticCurveTo(x + r*1.25 + w*0.3, y - r*0.4, x + r, y + r);
+  ctx.closePath();
+  ctx.fillStyle = col; ctx.fill();
+  ctx.strokeStyle = OUT; ctx.lineWidth = 1.7; ctx.stroke();
+  ctx.beginPath();                                           // 속불꽃
+  ctx.moveTo(x - r*0.45, y + r*0.8);
+  ctx.quadraticCurveTo(x - r*0.55, y - r*0.2, x + w*0.25, y - r*0.9);
+  ctx.quadraticCurveTo(x + r*0.55, y - r*0.15, x + r*0.45, y + r*0.8);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fill();
+}
+
+/* 깃털 날개: 3겹 + 깃 갈라짐 */
+function birdWing(x, y, spread, t, col, mc){
+  const sp = spread ? 1 : 0.42;
+  const flap = spread ? Math.sin(t*13)*0.3 : Math.sin(t*5)*0.08;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(-1.05 * sp + flap);
+  for (let i=0;i<3;i++){
+    ctx.beginPath();
+    ctx.ellipse(-5 - i*7*sp, i*1.8, (14 - i*2.4) * (0.6 + sp*0.55), 4.6 - i*0.6, -0.3 - i*0.16, 0, 7);
+    ctx.fillStyle = i === 2 ? (mc || col) : col; ctx.fill();
+    ctx.strokeStyle = OUT; ctx.lineWidth = 1.8; ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1.1;
+  for (let i=0;i<3;i++){
+    ctx.beginPath();
+    ctx.moveTo(-3 - i*5*sp, 1);
+    ctx.lineTo(-9 - i*6.5*sp, 3.5 + i*0.8);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function petWing(type, x, y, spread, t, col, mc){
+  if (type === 'feather'){ birdWing(x, y, spread, t, col, mc); return; }
+  const sp = spread ? 1 : 0.45;
+  const flap = spread ? Math.sin(t*12)*0.25 : Math.sin(t*5)*0.06;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(-0.7 * sp + flap);
+  if (type === 'bat'){
+    ctx.beginPath();
+    ctx.moveTo(0, 2);
+    ctx.quadraticCurveTo(-8, -15*sp - 4, -21*sp - 4, -13*sp - 2);
+    ctx.quadraticCurveTo(-17*sp - 4, -4, -23*sp - 5, 2);
+    ctx.quadraticCurveTo(-15*sp - 2, 1, -10*sp, 6);
+    ctx.closePath();
+    ctx.fillStyle = '#5a4668'; ctx.fill();
+    ctx.strokeStyle = OUT; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(-3, 0); ctx.lineTo(-14*sp - 2, -8*sp); ctx.stroke();
+  } else {                                                   // 나비 날개
+    for (const [dx, dy, rx, ry] of [[-9, -6, 9, 6.5], [-12, 4, 6.5, 5]]){
+      ctx.beginPath(); ctx.ellipse(dx*(0.6+sp*0.5), dy, rx*(0.6+sp*0.5), ry, -0.3, 0, 7);
+      ctx.fillStyle = mc; ctx.fill();
+      ctx.strokeStyle = OUT; ctx.lineWidth = 1.8; ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.beginPath(); ctx.ellipse(dx*(0.6+sp*0.5) - 1, dy - 1, rx*0.4, ry*0.4, -0.3, 0, 7); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+function petTail(sty, def, mc, t, c1){
+  c1 = c1 || def.c1;
+  const wag = Math.sin(t * 6) * 0.18;
+  function oF(col, lw){ ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = OUT; ctx.lineWidth = lw || 2.2; ctx.stroke(); }
+  if (sty.tail === 'bushy'){                                 // 크고 풍성한 S커브 꼬리
+    ctx.save(); ctx.translate(-24, -24); ctx.rotate(0.35 + wag);
+    ctx.beginPath();
+    ctx.moveTo(3, 6);
+    ctx.quadraticCurveTo(-10, 8, -16, 0);
+    ctx.quadraticCurveTo(-21, -8, -15, -16);
+    ctx.quadraticCurveTo(-9, -21, -3, -17);
+    ctx.quadraticCurveTo(3, -12, 4, -3);
+    ctx.closePath(); oF(c1, 2.3);
+    ctx.fillStyle = 'rgba(0,0,30,0.08)';
+    ctx.beginPath(); ctx.ellipse(-8, -3, 8, 10, -0.5, 0, 7); ctx.fill();
+    if (sty.extra === 'tailtip'){
+      ctx.beginPath(); ctx.ellipse(-13, -13, 6, 6.5, -0.6, 0, 7); oF('#ffffff', 1.9);
+    }
+    ctx.restore();
+  } else if (sty.tail === 'long'){
+    ctx.strokeStyle = OUT; ctx.lineWidth = 7.5;
+    ctx.beginPath(); ctx.moveTo(-23, -20); ctx.quadraticCurveTo(-34, -26, -33, -37 + wag*8); ctx.stroke();
+    ctx.strokeStyle = c1; ctx.lineWidth = 4.4;
+    ctx.beginPath(); ctx.moveTo(-23, -20); ctx.quadraticCurveTo(-34, -26, -33, -37 + wag*8); ctx.stroke();
+    ctx.beginPath(); ctx.arc(-33, -38 + wag*8, 3.8, 0, 7); oF(mc, 1.8);
+  } else if (sty.tail === 'flame'){
+    flameLobe(-27, -22, 6, t*7, mc);
+    flameLobe(-34, -18, 5, t*7 + 1.2, '#ffd94e');
+    flameLobe(-39, -13, 4, t*7 + 2.3, mc);
+  } else if (sty.tail === 'flow'){                           // 흐르는 리본 꼬리
+    ctx.strokeStyle = OUT; ctx.lineWidth = 8.5;
+    ctx.beginPath(); ctx.moveTo(-23, -18); ctx.quadraticCurveTo(-37, -12 + wag*10, -44, -25 + wag*12); ctx.stroke();
+    ctx.strokeStyle = mc; ctx.lineWidth = 5.2;
+    ctx.beginPath(); ctx.moveTo(-23, -18); ctx.quadraticCurveTo(-37, -12 + wag*10, -44, -25 + wag*12); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(-26, -18); ctx.quadraticCurveTo(-36, -13 + wag*10, -42, -23 + wag*12); ctx.stroke();
+  } else if (sty.tail === 'spade'){
+    ctx.strokeStyle = OUT; ctx.lineWidth = 6.5;
+    ctx.beginPath(); ctx.moveTo(-23, -17); ctx.quadraticCurveTo(-33, -15, -37, -23 + wag*6); ctx.stroke();
+    ctx.strokeStyle = c1; ctx.lineWidth = 3.8;
+    ctx.beginPath(); ctx.moveTo(-23, -17); ctx.quadraticCurveTo(-33, -15, -37, -23 + wag*6); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-37, -29 + wag*6); ctx.lineTo(-42, -20 + wag*6); ctx.lineTo(-33, -20 + wag*6);
+    ctx.closePath(); oF(def.c2, 1.8);
+  } else if (sty.tail === 'wag'){
+    ctx.strokeStyle = OUT; ctx.lineWidth = 7;
+    ctx.beginPath(); ctx.moveTo(-23, -22); ctx.quadraticCurveTo(-30, -29, -29, -34 + Math.sin(t*10)*3); ctx.stroke();
+    ctx.strokeStyle = c1; ctx.lineWidth = 4.2;
+    ctx.beginPath(); ctx.moveTo(-23, -22); ctx.quadraticCurveTo(-30, -29, -29, -34 + Math.sin(t*10)*3); ctx.stroke();
+  } else if (sty.tail === 'puff'){
+    ctx.beginPath(); ctx.arc(-26, -24, 5.5, 0, 7); oF('#ffffff', 1.9);
+  } else if (sty.tail !== 'feathers'){
+    ctx.beginPath(); ctx.arc(-25, -23, 3.6, 0, 7); oF(def.c2, 1.8);
+  }
+}
+function petEars(sty, def, hx, hy, t, mc){
+  function oF2(col, lw){ ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = OUT; ctx.lineWidth = lw || 2; ctx.stroke(); }
+  const inner = 'rgba(255,175,185,0.75)';
+  if (sty.ear === 'point'){
+    for (const ox of [-8, 3]){
+      ctx.beginPath();
+      ctx.moveTo(hx + ox - 3.5, hy - 9); ctx.quadraticCurveTo(hx + ox - 1, hy - 19, hx + ox + 1, hy - 19.5);
+      ctx.quadraticCurveTo(hx + ox + 3, hy - 15, hx + ox + 4, hy - 8.5);
+      ctx.closePath(); oF2(def.c1, 1.9);
+      ctx.fillStyle = inner;
+      ctx.beginPath();
+      ctx.moveTo(hx + ox - 1.4, hy - 10.5); ctx.lineTo(hx + ox + 0.5, hy - 16); ctx.lineTo(hx + ox + 2, hy - 10);
+      ctx.closePath(); ctx.fill();
+    }
+  } else if (sty.ear === 'round'){
+    for (const ox of [-8, 3]){
+      ctx.beginPath(); ctx.arc(hx + ox, hy - 12, 5, 0, 7); oF2(def.c1, 1.8);
+      ctx.fillStyle = inner; ctx.beginPath(); ctx.arc(hx + ox, hy - 12, 2.5, 0, 7); ctx.fill();
+    }
+  } else if (sty.ear === 'floppy'){
+    for (const ox of [-9, 3]){
+      ctx.beginPath(); ctx.ellipse(hx + ox, hy - 7, 3.8, 7.5, 0.5, 0, 7); oF2(petMix(def.c1, 0.2, false), 1.8);
+    }
+  } else if (sty.ear === 'side'){
+    ctx.beginPath(); ctx.ellipse(hx - 9, hy - 1, 3.6, 6, 0.75, 0, 7); oF2(petMix(def.c1, 0.15, false), 1.8);
+  } else if (sty.ear === 'frogeyes'){
+    for (const ox of [-6.5, 5]){
+      ctx.beginPath(); ctx.arc(hx + ox, hy - 11, 5.2, 0, 7); oF2(def.c1, 1.8);
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(hx + ox, hy - 11, 3, 0, 7); ctx.fill();
+      ctx.strokeStyle = OUT; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.fillStyle = '#1c120a'; ctx.beginPath(); ctx.arc(hx + ox + 0.8, hy - 11, 1.5, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(hx + ox - 0.3, hy - 12, 0.8, 0, 7); ctx.fill();
+    }
+  } else if (sty.ear === 'fin'){
+    for (const ox of [-9, 0]){
+      ctx.beginPath();
+      ctx.moveTo(hx + ox, hy - 8);
+      ctx.quadraticCurveTo(hx + ox - 4, hy - 17, hx + ox - 9, hy - 15);
+      ctx.quadraticCurveTo(hx + ox - 5, hy - 10, hx + ox - 1, hy - 5.5);
+      ctx.closePath(); oF2(mc, 1.8);
+    }
+  }
+  if (sty.horn === 'spiral'){
+    ctx.beginPath();
+    ctx.moveTo(hx - 5, hy - 10); ctx.quadraticCurveTo(hx - 2.5, hy - 18, hx - 1, hy - 25);
+    ctx.quadraticCurveTo(hx + 1.5, hy - 17, hx + 2.5, hy - 9.5);
+    ctx.closePath(); oF2('#ffd94e', 1.9);
+    ctx.strokeStyle = '#d0a020'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(hx - 3.8, hy - 13); ctx.lineTo(hx + 1.6, hy - 14.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hx - 3, hy - 17.5); ctx.lineTo(hx + 0.9, hy - 19); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hx - 2.2, hy - 21.5); ctx.lineTo(hx + 0.3, hy - 22.6); ctx.stroke();
+  } else if (sty.horn === 'twin'){
+    for (const ox of [-7, 2]){
+      ctx.beginPath();
+      ctx.moveTo(hx + ox, hy - 9);
+      ctx.quadraticCurveTo(hx + ox + 1, hy - 17, hx + ox + 3.5, hy - 18);
+      ctx.quadraticCurveTo(hx + ox + 4.5, hy - 13, hx + ox + 4.5, hy - 8.5);
+      ctx.closePath(); oF2('#f2e3c4', 1.7);
+    }
+  } else if (sty.horn === 'antler'){
+    ctx.strokeStyle = '#d8b878'; ctx.lineWidth = 2.8;
+    for (const ox of [-7, 2]){
+      ctx.beginPath();
+      ctx.moveTo(hx + ox, hy - 9);
+      ctx.quadraticCurveTo(hx + ox - 1, hy - 14, hx + ox - 3, hy - 18);
+      ctx.moveTo(hx + ox - 1.6, hy - 13.5);
+      ctx.lineTo(hx + ox + 3, hy - 16.5);
+      ctx.stroke();
+    }
+  }
+}
+
 const ITEM_RING = { magnet:'#e04b4b', giant:'#f5a03c', flight:'#7ab8e8', bomb:'#3a3a44', fever:'#ffb020' };
 function drawItem(sx, sy, type, t){
   // 비눗방울 캡슐
@@ -1385,15 +2204,20 @@ function drawMonster(sx, top, m, t){
   ctx.restore();
 }
 
-/* ---- 주인공 "리코": 고글 쓴 보물사냥꾼 소녀 (2등신 치비, 전부 도형) ---- */
-const OUT = '#41281c';                        // 만화풍 테두리 선
-function drawPlayer(sx, footY, t, p, scale){
+/* ==== 주인공 그리기: 캐릭터 3종 + 레벨 진화(5/15/25) + 탑승 자세 ==== */
+function drawPlayer(sx, footY, t, p, scale, opts){
   scale = scale || 1;
+  opts = opts || {};
+  const riding = !!opts.riding;
+  const chDef = opts.ch || ((typeof RUN !== 'undefined' && RUN && RUN.char) ? RUN.char.def : CHAR_BY_ID[META.charEq || 'rico']) || CHAR_BY_ID.rico;
+  const chLv = opts.lv || ((typeof RUN !== 'undefined' && RUN && RUN.char) ? RUN.char.lv : ((META.chars && META.chars[chDef.id]) ? META.chars[chDef.id].lv : 1));
+  const tier = charTier(chLv);
+  const ST = CHAR_STYLE[chDef.style] || CHAR_STYLE.rico;
+
   const dead = p && p.dead;
   const onG  = p ? p.onGround : true;
-  const a    = p ? p.anim * 2.2 : t * 8;      // 달리기 위상
-  const run  = onG && !dead;
-  const swing  = run ? Math.sin(a) : 0;
+  const a    = p ? p.anim * 2.2 : t * 8;
+  const run  = onG && !dead && !riding;
   const bounce = run ? Math.abs(Math.sin(a)) * 2.5 : 0;
   const rising = !onG && p && p.vy < -60;
 
@@ -1401,76 +2225,86 @@ function drawPlayer(sx, footY, t, p, scale){
   ctx.translate(sx, footY);
   ctx.scale(scale, scale);
 
-  // 그림자
-  if (!dead && onG){
+  if (!dead && onG && !riding){
     ctx.fillStyle = 'rgba(0,0,0,0.16)';
     ctx.beginPath(); ctx.ellipse(0, 6, 20, 5, 0, 0, 7); ctx.fill();
   }
   if (dead){ ctx.rotate(Math.min(1.25, p.deadT * 3)); }
+  else if (riding){ ctx.rotate(-0.06); }
   else if (!onG){ ctx.rotate(rising ? -0.16 : -0.05); }
-  else { ctx.rotate(-0.10 + Math.sin(a) * 0.035); }   // 걸음에 맞춰 몸이 미세하게 흔들림
+  else { ctx.rotate(-0.10 + Math.sin(a) * 0.035); }
   ctx.translate(0, -bounce);
 
-  const hx = 4, hy = -55;                     // 머리 중심
+  const hx = 4, hy = -55;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-
   function oFill(col, lw){
     ctx.fillStyle = col; ctx.fill();
     ctx.strokeStyle = OUT; ctx.lineWidth = lw || 2.5; ctx.stroke();
   }
 
-  // ---------- 목도리 (뒤로 휘날리는 리본) ----------
+  // ---------- 목도리 (캐릭터별 색, 뒤로 휘날림) ----------
   (function scarf(){
     const w1 = Math.sin(t*9) * 4, w2 = Math.sin(t*9 + 1.6) * 6;
+    const len = tier >= 3 ? 1.18 : 1;                       // 25레벨: 더 길고 멋지게
     ctx.beginPath();
     ctx.moveTo(-5, -34);
-    ctx.quadraticCurveTo(-16, -36 + w1, -26, -30 + w1);
-    ctx.quadraticCurveTo(-36, -25 + w2, -41, -30 + w2);
-    ctx.lineTo(-39, -22 + w2);
-    ctx.quadraticCurveTo(-32, -18 + w2, -24, -22 + w1);
-    ctx.quadraticCurveTo(-14, -27 + w1, -4, -27);
+    ctx.quadraticCurveTo(-16*len, -36 + w1, -26*len, -30 + w1);
+    ctx.quadraticCurveTo(-36*len, -25 + w2, -41*len, -30 + w2);
+    ctx.lineTo(-39*len, -22 + w2);
+    ctx.quadraticCurveTo(-32*len, -18 + w2, -24*len, -22 + w1);
+    ctx.quadraticCurveTo(-14*len, -27 + w1, -4, -27);
     ctx.closePath();
-    oFill('#e04b4b', 3);
-    ctx.strokeStyle = '#b83838'; ctx.lineWidth = 1.6;
-    ctx.beginPath(); ctx.moveTo(-12, -31 + w1*0.6); ctx.lineTo(-22, -26 + w1); ctx.stroke();
+    oFill(ST.scarf, 3);
+    ctx.strokeStyle = ST.scarfD; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(-12, -31 + w1*0.6); ctx.lineTo(-22*len, -26 + w1); ctx.stroke();
+    if (tier >= 1 && chDef.style === 'supi'){               // 숲이: 두 갈래 스카프
+      ctx.beginPath();
+      ctx.moveTo(-5, -30);
+      ctx.quadraticCurveTo(-15, -24 + w2, -24, -18 + w2);
+      ctx.lineTo(-22, -13 + w2);
+      ctx.quadraticCurveTo(-12, -20 + w1, -4, -25);
+      ctx.closePath(); oFill(ST.scarfD, 2.4);
+    }
   })();
 
-  // ---------- 뒷팔 (뒤로 젖힌 주먹) ----------
+  // ---------- 뒷팔 ----------
   (function backArm(){
     let bx, by;
-    if (!onG && !dead){ bx = -15; by = -33; }           // 점프: 뒤로 뻗음
+    if (riding){ bx = -10; by = -26; }
+    else if (!onG && !dead){ bx = -15; by = -33; }
     else { bx = -9 + Math.sin(a)*7 - 4; by = -25 - Math.max(0, Math.cos(a))*4; }
     ctx.strokeStyle = OUT; ctx.lineWidth = 9.5;
     ctx.beginPath(); ctx.moveTo(-5, -31); ctx.quadraticCurveTo(-11, -30, bx, by); ctx.stroke();
-    ctx.strokeStyle = '#c23a3a'; ctx.lineWidth = 6;
+    ctx.strokeStyle = ST.jdark; ctx.lineWidth = 6;
     ctx.beginPath(); ctx.moveTo(-5, -31); ctx.quadraticCurveTo(-11, -30, bx, by); ctx.stroke();
     ctx.beginPath(); ctx.arc(bx - 2, by + 2, 5, 0, 7); oFill('#8a5636', 2.2);
-    ctx.strokeStyle = '#6e4228'; ctx.lineWidth = 1.4;
-    ctx.beginPath(); ctx.moveTo(bx - 5, by + 1); ctx.lineTo(bx - 5, by + 4); ctx.stroke();
   })();
 
   // ---------- 다리 ----------
   function leg(sw, tuckBack){
     let kx, ky, fx, fy, footA;
-    if (dead){ kx = sw>0?8:-6; ky = -10; fx = sw>0?12:-9; fy = -3; footA = 0; }
+    if (riding){                                            // 탑승: 안장에 앉은 자세
+      kx = tuckBack ? 8 : 11; ky = -13;
+      fx = tuckBack ? 6.5 : 9.5; fy = -2;
+      footA = 0.6;
+    }
+    else if (dead){ kx = sw>0?8:-6; ky = -10; fx = sw>0?12:-9; fy = -3; footA = 0; }
     else if (!onG){
       if (tuckBack){ kx = -7; ky = -12; fx = -10; fy = -7; footA = -0.7; }
       else { kx = 9; ky = -13; fx = 14; fy = -9; footA = 0.5; }
     } else {
       const s = Math.sin(sw), c = Math.cos(sw);
-      const lift = Math.max(0, c) * 8;          // 발이 앞으로 나갈 때 들어올림
+      const lift = Math.max(0, c) * 8;
       fx = s * 15;
       fy = -lift;
-      kx = s * 7 + lift * 0.5;                  // 드는 동안 무릎이 앞으로 굽힘
+      kx = s * 7 + lift * 0.5;
       ky = -11 - lift * 0.35;
       footA = s * 0.45 - lift * 0.06;
     }
-    // 살구색 다리 (테두리 포함)
     ctx.strokeStyle = OUT; ctx.lineWidth = 10;
     ctx.beginPath(); ctx.moveTo(0, -19); ctx.quadraticCurveTo(kx, ky, fx, fy - 5); ctx.stroke();
     ctx.strokeStyle = '#ffdcbc'; ctx.lineWidth = 6.5;
     ctx.beginPath(); ctx.moveTo(0, -19); ctx.quadraticCurveTo(kx, ky, fx, fy - 5); ctx.stroke();
-    // 부츠 (갈색, 끈 장식)
     ctx.save();
     ctx.translate(fx, fy); ctx.rotate(footA);
     ctx.beginPath();
@@ -1490,113 +2324,178 @@ function drawPlayer(sx, footY, t, p, scale){
     ctx.stroke();
     ctx.restore();
   }
-  leg(a + Math.PI, true);                     // 뒷다리 (반대 위상)
+  leg(a + Math.PI, true);
 
   // ---------- 몸통 ----------
   (function torso(){
-    // 카키 반바지
-    ctx.beginPath(); roundRect(-9, -22, 19, 8, 3); oFill('#b09050', 2.4);
-    // 빨간 크롭 자켓
+    ctx.beginPath(); roundRect(-9, -22, 19, 8, 3); oFill(ST.shorts, 2.4);
     ctx.beginPath();
     ctx.moveTo(-10, -36);
     ctx.quadraticCurveTo(2, -40, 11, -36);
     ctx.lineTo(11.5, -24);
     ctx.quadraticCurveTo(2, -21, -9.5, -24);
     ctx.closePath();
-    oFill('#e04b4b', 2.6);
-    // 자켓 음영 + 지퍼
-    ctx.fillStyle = '#c23a3a';
+    oFill(ST.jacket, 2.6);
+    ctx.fillStyle = ST.jdark;
     ctx.beginPath();
     ctx.moveTo(-9.5, -27); ctx.quadraticCurveTo(2, -23.5, 11.5, -26.5);
     ctx.lineTo(11.5, -24); ctx.quadraticCurveTo(2, -21, -9.5, -24);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = '#f6d8a8'; ctx.lineWidth = 1.4;
-    ctx.beginPath(); ctx.moveTo(3, -38); ctx.lineTo(2, -23); ctx.stroke();
-    // 벨트 + 금색 버클
+    ctx.strokeStyle = tier >= 2 ? '#ffd94e' : '#f6d8a8'; ctx.lineWidth = tier >= 2 ? 1.8 : 1.4;
+    ctx.beginPath(); ctx.moveTo(3, -38); ctx.lineTo(2, -23); ctx.stroke();   // 15레벨: 금장 지퍼
     ctx.beginPath(); ctx.rect(-9.5, -16.5, 19.5, 4.5); oFill('#5a3a26', 2.2);
     ctx.beginPath(); ctx.rect(-2, -16.5, 5.5, 4.5); oFill('#ffcf4e', 1.8);
-    // 엉덩이 쪽 보물 주머니
-    ctx.beginPath(); roundRect(-17, -19, 9, 9.5, 2.5); oFill('#e04b4b', 2.2);
-    ctx.beginPath(); roundRect(-17, -19, 9, 4.5, 2.5); oFill('#c23a3a', 1.8);
+    ctx.beginPath(); roundRect(-17, -19, 9, 9.5, 2.5); oFill(ST.jacket, 2.2);
+    ctx.beginPath(); roundRect(-17, -19, 9, 4.5, 2.5); oFill(ST.jdark, 1.8);
     ctx.fillStyle = '#f2e3c4';
     ctx.beginPath(); ctx.arc(-12.5, -14.5, 1.4, 0, 7); ctx.fill();
   })();
 
-  leg(a, false);                              // 앞다리
+  leg(a, false);
 
-  // ---------- 만두머리 + 날개 장식 (머리 뒤) ----------
-  (function bunAndWing(){
-    // 하얀 날개 장식
-    const wingFlap = Math.sin(t * 10) * 0.12;
-    ctx.save();
-    ctx.translate(hx - 17, hy - 20);
-    ctx.rotate(-0.55 + wingFlap);
-    for (let i = 0; i < 3; i++){
-      ctx.beginPath();
-      ctx.ellipse(-4 - i * 4.5, i * 1.6, 9.5 - i * 1.6, 4.2 - i * 0.6, -0.35 - i * 0.22, 0, 7);
-      oFill('#ffffff', 2);
-    }
-    ctx.restore();
-    // 만두머리 (크게, 소용돌이 결)
-    ctx.beginPath(); ctx.arc(hx - 4, hy - 21, 12.5, 0, 7); oFill('#f6c445', 2.6);
-    ctx.strokeStyle = '#d89e2e'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(hx - 4, hy - 21, 8, -2.6, 0.2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(hx - 5, hy - 22, 4, -2.2, 1.2); ctx.stroke();
-    // 머리끈 (빨강)
-    ctx.beginPath(); roundRect(hx - 10.5, hy - 13.5, 12, 4.5, 2.2); oFill('#e04b4b', 2);
-  })();
+  // ---------- 머리: 캐릭터별 ----------
+  if (ST.head === 'buns'){
+    // 만두머리 + 날개 장식 (리코)
+    (function bunAndWing(){
+      const wingFlap = Math.sin(t * 10) * 0.12;
+      const wsc = tier >= 2 ? 1.3 : 1;                      // 15레벨: 날개 커짐
+      ctx.save();
+      ctx.translate(hx - 17, hy - 20);
+      ctx.rotate(-0.55 + wingFlap);
+      ctx.scale(wsc, wsc);
+      for (let i = 0; i < 3; i++){
+        ctx.beginPath();
+        ctx.ellipse(-4 - i * 4.5, i * 1.6, 9.5 - i * 1.6, 4.2 - i * 0.6, -0.35 - i * 0.22, 0, 7);
+        oFill('#ffffff', 2);
+      }
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(hx - 4, hy - 21, 12.5, 0, 7); oFill(ST.hair, 2.6);
+      ctx.strokeStyle = ST.hairD; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(hx - 4, hy - 21, 8, -2.6, 0.2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(hx - 5, hy - 22, 4, -2.2, 1.2); ctx.stroke();
+      ctx.beginPath(); roundRect(hx - 14, hy - 13.5, 10, 4, 2); oFill(ST.jacket, 2);
+    })();
+  }
 
-  // ---------- 머리카락 큰 덩어리 (실루엣의 주인공) ----------
-  ctx.beginPath(); ctx.ellipse(hx - 2, hy - 3, 21, 20, 0.05, 0, 7); oFill('#f6c445', 2.6);
+  // 머리카락 큰 덩어리 (공통)
+  if (ST.head !== 'hood'){
+    ctx.beginPath(); ctx.ellipse(hx - 2, hy - 3, 21, 20, 0.05, 0, 7); oFill(ST.hair, 2.6);
+  }
 
-  // ---------- 얼굴 (머리 아래쪽 절반만 차지하는 작은 타원) ----------
+  // 얼굴
   ctx.beginPath(); ctx.ellipse(hx + 5.5, hy + 5.5, 13.5, 12.5, 0.05, 0, 7); oFill('#ffdcbc', 2.4);
 
-  // ---------- 앞머리 (크고 부드러운 결 3개가 이마를 덮음) ----------
-  (function bangs(){
-    ctx.beginPath();
-    ctx.moveTo(hx - 19.5, hy + 7);
-    ctx.quadraticCurveTo(hx - 24, hy - 13, hx - 9, hy - 20.5);
-    ctx.quadraticCurveTo(hx + 6, hy - 25, hx + 18, hy - 12.5);
-    ctx.quadraticCurveTo(hx + 21.5, hy - 6, hx + 18, hy + 2);
-    // 부드러운 결 3개 (오른쪽 -> 왼쪽)
-    ctx.quadraticCurveTo(hx + 15, hy + 4.5, hx + 11.5, hy + 0.5);
-    ctx.quadraticCurveTo(hx + 8, hy - 4.5, hx + 4.5, hy - 0.5);
-    ctx.quadraticCurveTo(hx + 2, hy + 3.5, hx - 2, hy - 0.5);
-    ctx.quadraticCurveTo(hx - 6, hy - 5.5, hx - 9.5, hy - 1.5);
-    ctx.quadraticCurveTo(hx - 12, hy + 2.5, hx - 15, hy - 0.5);
-    ctx.quadraticCurveTo(hx - 18, hy - 3.5, hx - 19.5, hy + 7);
-    ctx.closePath();
-    oFill('#f6c445', 2.5);
-    // 옆머리 한 가닥 (얼굴 왼쪽 프레임)
-    ctx.beginPath();
-    ctx.moveTo(hx - 15.5, hy + 1);
-    ctx.quadraticCurveTo(hx - 18.5, hy + 10, hx - 13.5, hy + 16.5);
-    ctx.quadraticCurveTo(hx - 12.5, hy + 8, hx - 10.5, hy + 3.5);
-    ctx.closePath();
-    oFill('#f6c445', 2.2);
-    // 머릿결 음영
-    ctx.strokeStyle = '#d89e2e'; ctx.lineWidth = 1.7;
-    ctx.beginPath(); ctx.moveTo(hx - 6, hy - 18); ctx.quadraticCurveTo(hx - 2, hy - 14, hx - 4, hy - 8); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(hx + 8, hy - 16); ctx.quadraticCurveTo(hx + 11, hy - 12, hx + 9.5, hy - 6); ctx.stroke();
-  })();
+  if (ST.head === 'buns'){
+    // 앞머리 (리코)
+    (function bangs(){
+      ctx.beginPath();
+      ctx.moveTo(hx - 19.5, hy + 7);
+      ctx.quadraticCurveTo(hx - 24, hy - 13, hx - 9, hy - 20.5);
+      ctx.quadraticCurveTo(hx + 6, hy - 25, hx + 18, hy - 12.5);
+      ctx.quadraticCurveTo(hx + 21.5, hy - 6, hx + 18, hy + 2);
+      ctx.quadraticCurveTo(hx + 15, hy + 4.5, hx + 11.5, hy + 0.5);
+      ctx.quadraticCurveTo(hx + 8, hy - 4.5, hx + 4.5, hy - 0.5);
+      ctx.quadraticCurveTo(hx + 2, hy + 3.5, hx - 2, hy - 0.5);
+      ctx.quadraticCurveTo(hx - 6, hy - 5.5, hx - 9.5, hy - 1.5);
+      ctx.quadraticCurveTo(hx - 12, hy + 2.5, hx - 15, hy - 0.5);
+      ctx.quadraticCurveTo(hx - 18, hy - 3.5, hx - 19.5, hy + 7);
+      ctx.closePath();
+      oFill(ST.hair, 2.5);
+      ctx.beginPath();
+      ctx.moveTo(hx - 15.5, hy + 1);
+      ctx.quadraticCurveTo(hx - 18.5, hy + 10, hx - 13.5, hy + 16.5);
+      ctx.quadraticCurveTo(hx - 12.5, hy + 8, hx - 10.5, hy + 3.5);
+      ctx.closePath();
+      oFill(ST.hair, 2.2);
+      ctx.strokeStyle = ST.hairD; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(hx - 5, hy - 17); ctx.quadraticCurveTo(hx - 1, hy - 14, hx - 2, hy - 9); ctx.stroke();
+    })();
+    // 고글 (5레벨: 금장 버클)
+    (function goggles(){
+      ctx.strokeStyle = OUT; ctx.lineWidth = 8;
+      ctx.beginPath(); ctx.moveTo(hx - 16.5, hy - 12); ctx.quadraticCurveTo(hx, hy - 19, hx + 16, hy - 15); ctx.stroke();
+      ctx.strokeStyle = '#d9463c'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(hx - 16.5, hy - 12); ctx.quadraticCurveTo(hx, hy - 19, hx + 16, hy - 15); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(hx + 8.5, hy - 15, 9.2, 7.4, -0.1, 0, 7); oFill('#d9463c', 2.6);
+      ctx.beginPath(); ctx.ellipse(hx + 8.5, hy - 15, 6, 4.9, -0.1, 0, 7); oFill('#2b2b33', 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.beginPath(); ctx.ellipse(hx + 6.2, hy - 17.2, 2.4, 1.3, -0.5, 0, 7); ctx.fill();
+      ctx.beginPath(); roundRect(hx - 18.5, hy - 15, 4.5, 6, 1.5); oFill(tier >= 1 ? '#ffcf4e' : '#b83838', 1.8);
+    })();
+  } else if (ST.head === 'hood'){
+    // 루나: 마법사 후드
+    (function hood(){
+      // 후드 밖 흰 앞머리
+      ctx.beginPath();
+      ctx.moveTo(hx - 12, hy - 4);
+      ctx.quadraticCurveTo(hx - 2, hy - 10, hx + 12, hy - 5);
+      ctx.quadraticCurveTo(hx + 9, hy + 1, hx + 5, hy - 1);
+      ctx.quadraticCurveTo(hx + 1, hy + 3, hx - 3, hy - 0.5);
+      ctx.quadraticCurveTo(hx - 7, hy + 2, hx - 12, hy - 4);
+      ctx.closePath(); oFill(ST.hair, 2.2);
+      // 후드 본체 (뾰족한 끝이 뒤로 처짐)
+      ctx.beginPath();
+      ctx.moveTo(hx - 19, hy + 6);
+      ctx.quadraticCurveTo(hx - 25, hy - 14, hx - 8, hy - 21.5);
+      ctx.quadraticCurveTo(hx + 7, hy - 26, hx + 18.5, hy - 12);
+      ctx.quadraticCurveTo(hx + 21, hy - 6, hx + 17.5, hy - 1.5);
+      ctx.quadraticCurveTo(hx + 8, hy - 8, hx - 4, hy - 6.5);
+      ctx.quadraticCurveTo(hx - 14, hy - 5, hx - 19, hy + 6);
+      ctx.closePath();
+      oFill(ST.jacket, 2.6);
+      // 뾰족 끝 (방울 달림)
+      const sway = Math.sin(t*6) * 2;
+      ctx.beginPath();
+      ctx.moveTo(hx - 12, hy - 18);
+      ctx.quadraticCurveTo(hx - 24, hy - 24, hx - 28 + sway, hy - 15);
+      ctx.quadraticCurveTo(hx - 20, hy - 15, hx - 15, hy - 12);
+      ctx.closePath(); oFill(ST.jacket, 2.3);
+      ctx.beginPath(); ctx.arc(hx - 28.5 + sway, hy - 14, 3.4, 0, 7); oFill('#f78fb3', 2);
+      // 5레벨: 초승달 / 25레벨: 별 장식
+      if (tier >= 1){
+        ctx.fillStyle = '#ffd94e';
+        ctx.beginPath(); ctx.arc(hx + 3, hy - 15, 4.6, 0, 7); ctx.fill();
+        ctx.fillStyle = ST.jacket;
+        ctx.beginPath(); ctx.arc(hx + 5, hy - 16.2, 4, 0, 7); ctx.fill();
+      }
+      if (tier >= 2){ drawStar(hx - 8, hy - 13, 3, STAR_TIERS[3]); }
+      if (tier >= 3){ drawStar(hx + 12, hy - 8, 2.6, STAR_TIERS[4]); drawStar(hx - 16, hy - 5, 2.2, STAR_TIERS[3]); }
+    })();
+  } else if (ST.head === 'spiky'){
+    // 숲이: 헝클어진 흰 머리
+    (function spiky(){
+      ctx.beginPath();
+      ctx.moveTo(hx - 19, hy + 6);
+      ctx.quadraticCurveTo(hx - 23, hy - 8, hx - 14, hy - 15);
+      ctx.lineTo(hx - 12, hy - 21);  ctx.lineTo(hx - 7, hy - 16.5);
+      ctx.lineTo(hx - 2, hy - 24);   ctx.lineTo(hx + 2.5, hy - 17);
+      ctx.lineTo(hx + 8, hy - 22);   ctx.lineTo(hx + 10.5, hy - 15.5);
+      ctx.lineTo(hx + 17, hy - 17);  ctx.lineTo(hx + 16, hy - 10);
+      ctx.quadraticCurveTo(hx + 21, hy - 6, hx + 17.5, hy);
+      ctx.quadraticCurveTo(hx + 13, hy + 3, hx + 10, hy - 1);
+      ctx.quadraticCurveTo(hx + 5, hy + 2.5, hx + 1, hy - 1.5);
+      ctx.quadraticCurveTo(hx - 4, hy + 2, hx - 8, hy - 2);
+      ctx.quadraticCurveTo(hx - 13, hy + 1, hx - 19, hy + 6);
+      ctx.closePath();
+      oFill(ST.hair, 2.5);
+      ctx.strokeStyle = ST.hairD; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(hx - 6, hy - 15); ctx.quadraticCurveTo(hx - 3, hy - 12, hx - 4.5, hy - 8); ctx.stroke();
+      // 5레벨: 잎사귀 핀 / 15레벨: 초록 머리띠
+      if (tier >= 2){
+        ctx.strokeStyle = '#4ea86a'; ctx.lineWidth = 3.4;
+        ctx.beginPath(); ctx.moveTo(hx - 15, hy - 9); ctx.quadraticCurveTo(hx, hy - 14.5, hx + 15, hy - 11); ctx.stroke();
+      }
+      if (tier >= 1){
+        ctx.beginPath();
+        ctx.moveTo(hx - 12, hy - 13);
+        ctx.quadraticCurveTo(hx - 7, hy - 21, hx - 2, hy - 17);
+        ctx.quadraticCurveTo(hx - 7, hy - 15, hx - 10, hy - 11.5);
+        ctx.closePath(); oFill('#6cc24a', 1.8);
+      }
+    })();
+  }
 
-  // ---------- 고글 (머리카락 위에 걸침) ----------
-  (function goggles(){
-    ctx.strokeStyle = OUT; ctx.lineWidth = 8;
-    ctx.beginPath(); ctx.moveTo(hx - 16.5, hy - 12); ctx.quadraticCurveTo(hx, hy - 19, hx + 16, hy - 15); ctx.stroke();
-    ctx.strokeStyle = '#d9463c'; ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.moveTo(hx - 16.5, hy - 12); ctx.quadraticCurveTo(hx, hy - 19, hx + 16, hy - 15); ctx.stroke();
-    // 렌즈
-    ctx.beginPath(); ctx.ellipse(hx + 8.5, hy - 15, 9.2, 7.4, -0.1, 0, 7); oFill('#d9463c', 2.6);
-    ctx.beginPath(); ctx.ellipse(hx + 8.5, hy - 15, 6, 4.9, -0.1, 0, 7); oFill('#2b2b33', 2);
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.beginPath(); ctx.ellipse(hx + 6.2, hy - 17.2, 2.4, 1.3, -0.5, 0, 7); ctx.fill();
-    // 왼쪽 버클
-    ctx.beginPath(); roundRect(hx - 18.5, hy - 15, 4.5, 6, 1.5); oFill('#b83838', 1.8);
-  })();
-
-  // ---------- 눈, 표정 ----------
+  // ---------- 눈, 표정 (공통) ----------
   (function face(){
     if (dead){
       ctx.strokeStyle = OUT; ctx.lineWidth = 2.6;
@@ -1605,18 +2504,18 @@ function drawPlayer(sx, footY, t, p, scale){
       ctx.moveTo(hx + 14, hy + 3); ctx.lineTo(hx + 6, hy + 11);
       ctx.stroke();
     } else {
-      // 눈 (적당한 크기: 흰자 -> 파란 홍채 -> 동공 -> 반짝임)
+      const eyeCol = chDef.style === 'luna' ? '#9a6ad8' : chDef.style === 'supi' ? '#4ea86a' : '#3d78d8';
+      const eyeD   = chDef.style === 'luna' ? '#7448b0' : chDef.style === 'supi' ? '#357a4a' : '#274f9e';
       ctx.beginPath(); ctx.ellipse(hx + 10, hy + 6.5, 4.6, 5.9, 0.06, 0, 7); oFill('#ffffff', 2);
-      ctx.fillStyle = '#3d78d8';
+      ctx.fillStyle = eyeCol;
       ctx.beginPath(); ctx.ellipse(hx + 10.8, hy + 6.9, 3.1, 4.4, 0.06, 0, 7); ctx.fill();
-      ctx.fillStyle = '#274f9e';
+      ctx.fillStyle = eyeD;
       ctx.beginPath(); ctx.ellipse(hx + 10.8, hy + 5.1, 2.8, 2.2, 0.06, 0, 7); ctx.fill();
       ctx.fillStyle = '#101826';
       ctx.beginPath(); ctx.arc(hx + 11, hy + 7.3, 1.6, 0, 7); ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.beginPath(); ctx.arc(hx + 9.5, hy + 4.6, 1.35, 0, 7); ctx.fill();
       ctx.beginPath(); ctx.arc(hx + 12.2, hy + 8.6, 0.75, 0, 7); ctx.fill();
-      // 속눈썹 라인 (끝이 살짝 올라감)
       ctx.strokeStyle = OUT; ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(hx + 5.8, hy + 1.8);
@@ -1624,18 +2523,17 @@ function drawPlayer(sx, footY, t, p, scale){
       ctx.lineTo(hx + 16, hy - 0.4);
       ctx.stroke();
     }
-    // 입 (작게 활짝)
     ctx.beginPath(); ctx.arc(hx + 5, hy + 13.5, 2.6, 0.15, Math.PI - 0.15);
     ctx.closePath(); oFill('#8a3a2a', 1.7);
-    // 볼터치 (은은하게 하나만)
     ctx.fillStyle = 'rgba(255,130,130,0.35)';
-    ctx.beginPath(); ctx.ellipse(hx + 15.5, hy + 10, 2.6, 1.6, 0.3, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(hx + 15.5, hy + 10, 2.8, 1.8, 0.3, 0, 7); ctx.fill();
   })();
 
-  // ---------- 앞팔 (불끈 쥔 주먹) ----------
+  // ---------- 앞팔 ----------
   (function frontArm(){
     let fxp, fyp;
-    if (!onG && !dead){ fxp = 17; fyp = -38; }          // 점프: 앞으로 쭉!
+    if (riding){ fxp = 15; fyp = -25; }                     // 갈기를 잡은 손
+    else if (!onG && !dead){ fxp = 17; fyp = -38; }
     else {
       const s2 = Math.sin(a + Math.PI);
       fxp = 11 + s2 * 7;
@@ -1643,12 +2541,21 @@ function drawPlayer(sx, footY, t, p, scale){
     }
     ctx.strokeStyle = OUT; ctx.lineWidth = 9.5;
     ctx.beginPath(); ctx.moveTo(6, -32); ctx.quadraticCurveTo(11, -31, fxp, fyp); ctx.stroke();
-    ctx.strokeStyle = '#e04b4b'; ctx.lineWidth = 6;
+    ctx.strokeStyle = ST.jacket; ctx.lineWidth = 6;
     ctx.beginPath(); ctx.moveTo(6, -32); ctx.quadraticCurveTo(11, -31, fxp, fyp); ctx.stroke();
     ctx.beginPath(); ctx.arc(fxp + 2.5, fyp - 1, 5.4, 0, 7); oFill('#8a5636', 2.4);
     ctx.strokeStyle = '#6e4228'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(fxp + 5.5, fyp - 4); ctx.quadraticCurveTo(fxp + 7, fyp - 1, fxp + 5.5, fyp + 2); ctx.stroke();
   })();
+
+  // ---------- 25레벨: 황금 오라 ----------
+  if (tier >= 3 && !dead){
+    ctx.fillStyle = 'rgba(255,222,120,' + (0.5 + Math.sin(t*6)*0.3) + ')';
+    for (let i=0;i<4;i++){
+      const aa = t*2.8 + i*1.6;
+      ctx.beginPath(); ctx.arc(Math.cos(aa)*26, -38 + Math.sin(aa)*26, 2, 0, 7); ctx.fill();
+    }
+  }
 
   ctx.restore();
 }
@@ -1669,10 +2576,14 @@ function showHome(){
   $('pauseModal').classList.add('hidden');
   const clv = classLevel(META.totalM);
   const prog = Math.floor(classProgress(META.totalM) * 100);
+  const eqDef = META.equipped ? PET_BY_ID[META.equipped] : null;
+  const chSt = META.chars[META.charEq] || { lv:1 };
   $('homeStat').innerHTML =
     '🏆 최고 기록: <b>' + fmt(META.bestScore) + '점</b> · ' + fmt(Math.floor(META.bestDist)) + 'm<br>' +
-    '⭐ 모은 별: <b>' + fmt(META.stars) + '개</b><br>' +
-    '🎖️ 클래스 Lv.<b>' + clv + '</b> (점수 +' + clv + '%) · 다음까지 ' + prog + '%';
+    '⭐ <b>' + fmt(META.stars) + '</b> · 🎖️ 클래스 Lv.<b>' + clv + '</b> (' + prog + '%) · 👧 <b>' +
+    CHAR_BY_ID[META.charEq].name + '</b> Lv.<b>' + chSt.lv + '</b><br>' +
+    '🐾 ' + (eqDef ? '파트너: <b>' + eqDef.name + '</b> (' + AB_NAME[eqDef.ab] + ')' : '파트너 없음') +
+    ' · 도감 <b>' + ownedPetCount() + '/' + PETS.length + '</b>';
   $('btnSound').textContent = '소리: ' + (META.sound ? '켬' : '끔');
 }
 function startRun(){
@@ -1680,6 +2591,14 @@ function startRun(){
   RUN.player.y = GY;
   RUN.shields = META.up.shield || 0;
   RUN.classLvAtStart = classLevel(META.totalM);
+  if (META.equipped && META.pets[META.equipped]){
+    const def = PET_BY_ID[META.equipped], lv = META.pets[META.equipped];
+    RUN.pet = { def, lv, pw: petAbilityPw(def, lv) };
+    RUN.petStam = def.ab === 'float' ? RUN.pet.pw : 0;
+  }
+  const cid = (META.charEq && META.chars[META.charEq]) ? META.charEq : 'rico';
+  RUN.char = { def: CHAR_BY_ID[cid], lv: META.chars[cid].lv };
+  RUN.stomps = 0;
   const dashDur = 0.8 + (META.up.dash || 0) * 0.6;
   RUN.eff.dash = dashDur;
   const safeW = 1200 + Math.ceil(dashDur * 1400);   // 대시 거리만큼 안전 지대 연장
@@ -1691,7 +2610,12 @@ function startRun(){
   $('resultModal').classList.add('hidden');
   $('hud').classList.remove('hidden');
   $('feverBar').classList.remove('hidden');
-  banner('탭해서 점프! 두 번 탭하면 2단 점프!');
+  if (RUN.pet){
+    const abTip = { jump3:'과 함께: 공중에서 한 번 더! 3단 점프', glide:'와 함께: 꾹 누르면 활강!', float:'와 함께: 꾹 누르면 비행!' };
+    banner(RUN.pet.def.name + abTip[RUN.pet.def.ab]);
+  } else {
+    banner('탭해서 점프! 두 번 탭하면 2단 점프!');
+  }
 }
 function endRun(){
   const R = RUN;
@@ -1700,6 +2624,23 @@ function endRun(){
   META.stars += R.starsGot;
   META.totalM += dist;
   META.plays += 1;
+  META.lifeStars += R.starsGot;
+  META.stomps += R.stomps;
+  // 캐릭터 경험치 = 달린 거리
+  const ce = META.chars[R.char ? R.char.def.id : 'rico'];
+  const charLvBefore = ce.lv;
+  ce.exp += dist;
+  while (ce.lv < 30 && ce.exp >= charExpNeed(ce.lv)){ ce.exp -= charExpNeed(ce.lv); ce.lv += 1; }
+  const charLeveled = ce.lv > charLvBefore;
+  // 미션 해금 검사
+  let newChar = null;
+  for (const ch of CHARS){
+    if (!ch.unlock || META.chars[ch.id]) continue;
+    if (META[ch.unlock.key] >= ch.unlock.need){
+      META.chars[ch.id] = { lv:1, exp:0 };
+      newChar = ch;
+    }
+  }
   const lvAfter = classLevel(META.totalM);
   let isRecord = false;
   if (score > META.bestScore){ META.bestScore = score; isRecord = true; }
@@ -1714,15 +2655,15 @@ function endRun(){
   $('rStars').textContent = fmt(R.starsGot) + '개';
   $('rBest').textContent = fmt(META.bestScore);
   const nr = $('newRecord');
-  if (lvAfter > lvBefore){
-    nr.textContent = '🎖️ 클래스 Lv.' + lvAfter + ' 달성! (점수 +' + lvAfter + '%)' + (isRecord ? ' & 새 기록!' : '');
-    nr.classList.remove('hidden');
-  } else {
-    nr.textContent = '🎉 새로운 최고 기록! 🎉';
-    nr.classList.toggle('hidden', !isRecord);
-  }
+  const msgs = [];
+  if (newChar) msgs.push('🎊 새 캐릭터 [' + newChar.name + '] 합류!');
+  if (charLeveled) msgs.push('👧 ' + (R.char ? R.char.def.name : '리코') + ' Lv.' + ce.lv + '!');
+  if (lvAfter > lvBefore) msgs.push('🎖️ 클래스 Lv.' + lvAfter + '!');
+  if (isRecord) msgs.push('🎉 새로운 최고 기록!');
+  nr.textContent = msgs.join(' ');
+  nr.classList.toggle('hidden', msgs.length === 0);
   $('resultModal').classList.remove('hidden');
-  if (isRecord || lvAfter > lvBefore){ SFX.record(); confettiBurst(); }
+  if (msgs.length > 0){ SFX.record(); confettiBurst(); }
 }
 function doPause(silent){
   if (scene !== 'run' || RUN.player.dead) return;
@@ -1746,6 +2687,38 @@ $('btnSound').addEventListener('click', ()=>{
   META.sound = !META.sound; saveMeta();
   $('btnSound').textContent = '소리: ' + (META.sound ? '켬' : '끔');
 });
+function rollGrade(rng){
+  const r = rng();
+  if ((META.pity || 0) >= 15){                  // 천장: S 이상 확정
+    return r < 0.70 ? 'S' : r < 0.94 ? 'SS' : 'SSS';
+  }
+  return r < 0.55 ? 'B' : r < 0.83 ? 'A' : r < 0.95 ? 'S' : r < 0.99 ? 'SS' : 'SSS';
+}
+function gachaPull(rng){
+  rng = rng || Math.random;
+  if (META.stars < PULL_COST) return { result:'poor' };
+  META.stars -= PULL_COST;
+  const grade = rollGrade(rng);
+  if (grade === 'S' || grade === 'SS' || grade === 'SSS') META.pity = 0;
+  else META.pity = (META.pity || 0) + 1;
+  const pool = PETS.filter(pt => pt.grade === grade);
+  const def = pool[Math.floor(rng() * pool.length) % pool.length];
+  let result;
+  const cur = META.pets[def.id] || 0;
+  if (cur === 0){ META.pets[def.id] = 1; result = 'new'; }
+  else if (cur < 5){ META.pets[def.id] = cur + 1; result = 'levelup'; }
+  else { META.stars += 80; result = 'maxed'; }
+  if (!META.equipped && result === 'new') META.equipped = def.id;
+  saveMeta();
+  return { result, def, grade, lv: META.pets[def.id] || 5 };
+}
+function equipPet(id){
+  if (id !== null && !META.pets[id]) return false;
+  META.equipped = id;
+  saveMeta();
+  return true;
+}
+function ownedPetCount(){ return Object.keys(META.pets).length; }
 function canBuy(key){
   const lv = META.up[key] || 0;
   return lv < UPGRADES[key].max && META.stars >= upgCost(key, lv);
@@ -1792,11 +2765,137 @@ function renderUpgrades(){
 function showHomeStatOnly(){
   const clv = classLevel(META.totalM);
   const prog = Math.floor(classProgress(META.totalM) * 100);
+  const eqDef = META.equipped ? PET_BY_ID[META.equipped] : null;
+  const chSt = META.chars[META.charEq] || { lv:1 };
   $('homeStat').innerHTML =
     '🏆 최고 기록: <b>' + fmt(META.bestScore) + '점</b> · ' + fmt(Math.floor(META.bestDist)) + 'm<br>' +
-    '⭐ 모은 별: <b>' + fmt(META.stars) + '개</b><br>' +
-    '🎖️ 클래스 Lv.<b>' + clv + '</b> (점수 +' + clv + '%) · 다음까지 ' + prog + '%';
+    '⭐ <b>' + fmt(META.stars) + '</b> · 🎖️ 클래스 Lv.<b>' + clv + '</b> (' + prog + '%) · 👧 <b>' +
+    CHAR_BY_ID[META.charEq].name + '</b> Lv.<b>' + chSt.lv + '</b><br>' +
+    '🐾 ' + (eqDef ? '파트너: <b>' + eqDef.name + '</b> (' + AB_NAME[eqDef.ab] + ')' : '파트너 없음') +
+    ' · 도감 <b>' + ownedPetCount() + '/' + PETS.length + '</b>';
 }
+function renderChars(){
+  const list = $('charList');
+  let h = '';
+  for (const ch of CHARS){
+    const owned = !!META.chars[ch.id];
+    const eq = META.charEq === ch.id;
+    const st = META.chars[ch.id];
+    let mid = '';
+    if (owned){
+      const need = st.lv >= 30 ? 0 : charExpNeed(st.lv);
+      const pct = st.lv >= 30 ? 100 : Math.floor(st.exp / need * 100);
+      mid = '<div class="charPass">Lv.' + st.lv + (st.lv>=30?' (최대)':'') + ' · ' + ch.passiveText +
+            ' · 점수 +' + ((st.lv-1)*0.5).toFixed(1) + '%</div>' +
+            '<div class="charExpBar"><div class="charExpFill" style="width:' + pct + '%"></div></div>';
+    } else {
+      const cur = Math.min(META[ch.unlock.key] || 0, ch.unlock.need);
+      mid = '<div class="charPass">' + ch.passiveText + '</div>' +
+            '<div class="charMission">🔒 ' + ch.unlock.text + ' (' + fmt(cur) + '/' + fmt(ch.unlock.need) + ')</div>';
+    }
+    h += '<div class="charRow' + (eq ? ' equipped' : '') + (owned ? '' : ' locked') + '" data-ch="' + ch.id + '">' +
+      '<canvas width="64" height="86" data-chdraw="' + ch.id + '"></canvas>' +
+      '<div class="charInfo">' +
+        '<div class="charName">' + ch.name + ' <span style="font-size:12px;color:#8a9a8a;">' + ch.role + '</span>' + (eq ? ' ✅' : '') + '</div>' +
+        mid +
+      '</div>' +
+      '</div>';
+  }
+  list.innerHTML = h;
+  list.querySelectorAll('canvas[data-chdraw]').forEach(cv => {
+    const ch = CHAR_BY_ID[cv.dataset.chdraw];
+    const lv = META.chars[ch.id] ? META.chars[ch.id].lv : 1;
+    const c = cv.getContext('2d');
+    const old = ctx; ctx = c;
+    drawPlayer(30, 80, 0.8, { onGround:true, anim:0.6, dead:false }, 0.85, { ch, lv });
+    ctx = old;
+  });
+  list.querySelectorAll('.charRow').forEach(row => {
+    row.addEventListener('click', ()=>{
+      const id = row.dataset.ch;
+      if (!META.chars[id]){ banner('미션을 달성하면 만날 수 있어요!'); return; }
+      META.charEq = id;
+      saveMeta();
+      SFX.item();
+      renderChars();
+      showHomeStatOnly();
+    });
+  });
+}
+$('btnChars').addEventListener('click', ()=>{
+  renderChars();
+  $('charModal').classList.remove('hidden');
+});
+$('btnCharClose').addEventListener('click', ()=> $('charModal').classList.add('hidden'));
+function renderPets(){
+  $('petStars').textContent = '⭐ ' + fmt(META.stars);
+  $('pityTip').textContent = (META.pity || 0) >= 15
+    ? '🌟 다음 소환은 S등급 이상 확정!'
+    : 'S등급 미만 연속 ' + (META.pity || 0) + '회 · 15회가 되면 다음은 S 이상 확정';
+  const grid = $('petGrid');
+  const sorted = PETS.slice().sort((a,b)=> GRADE_ORDER.indexOf(b.grade) - GRADE_ORDER.indexOf(a.grade));
+  let h = '';
+  for (const def of sorted){
+    const lv = META.pets[def.id] || 0;
+    const owned = lv > 0, eq = META.equipped === def.id;
+    const shownLv = owned ? lv : 1;
+    const abStars = petStars(def);          // 능력 = 등급 별점
+    const psStars = petPassiveStars(def);   // 패시브 별점
+    h += '<div class="petCard' + (eq ? ' equipped' : '') + (owned ? '' : ' unowned') + '" data-pet="' + def.id + '">' +
+      (eq ? '<div class="eqMark">✅</div>' : '') +
+      (owned && lv > 1 ? '<div class="petLv">+' + (lv-1) + '</div>' : '') +
+      '<canvas width="72" height="56" data-draw="' + def.id + '"></canvas>' +
+      '<div class="petName">' + (owned ? def.name : '???') + ' <span style="color:' + GRADE_COL[def.grade] + ';font-weight:bold;">' + def.grade + '</span></div>' +
+      '<div class="petAb">' + AB_NAME[def.ab] + '</div>' +
+      '<div class="petStatLine"><span>능력</span><span class="stars">' + starStr(abStars) + '</span></div>' +
+      '<div class="petStatSub">' + petAbilityDetail(def, shownLv) + '</div>' +
+      '<div class="petStatLine"><span>패시브</span><span class="stars">' + starStr(psStars) + '</span></div>' +
+      '<div class="petStatSub">' + petPassiveSummary(def, shownLv) + '</div>' +
+      '</div>';
+  }
+  grid.innerHTML = h;
+  grid.querySelectorAll('canvas[data-draw]').forEach(cv => {
+    const def = PET_BY_ID[cv.dataset.draw];
+    const c = cv.getContext('2d');
+    const old = ctx; ctx = c;
+    drawPet(32, 50, 1.2, { onGround:true, gliding:false, dead:false, anim:0.5 },
+      { def, lv: META.pets[def.id] || 1, pw:0 }, 0.95);
+    ctx = old;
+  });
+  grid.querySelectorAll('.petCard').forEach(card => {
+    card.addEventListener('click', ()=>{
+      const id = card.dataset.pet;
+      if (!META.pets[id]){ $('pullResult').textContent = '아직 만나지 못한 친구예요. 소환으로 만나보세요!'; return; }
+      equipPet(META.equipped === id ? null : id);
+      SFX.item();
+      renderPets();
+      showHomeStatOnly();
+    });
+  });
+}
+$('btnPull').addEventListener('click', ()=>{
+  const r = gachaPull();
+  if (r.result === 'poor'){
+    $('pullResult').textContent = '별이 부족해요! 달리며 더 모아볼까요? (' + fmt(META.stars) + '/' + PULL_COST + ')';
+    return;
+  }
+  const g = r.def.grade;
+  let msg;
+  if (r.result === 'new') msg = '🎉 [' + g + '] ' + r.def.name + ' 획득! ' + starStr(petStars(r.def)) + ' (' + AB_NAME[r.def.ab] + ')';
+  else if (r.result === 'levelup') msg = '💫 [' + g + '] ' + r.def.name + ' 강화! (+' + (r.lv - 1) + ')';
+  else msg = '[' + g + '] ' + r.def.name + '는 이미 최대 강화! 별 80개를 돌려받았어요.';
+  $('pullResult').innerHTML = '<b style="color:' + GRADE_COL[g] + '">' + msg + '</b>';
+  if (r.result === 'new' || g === 'S' || g === 'SS' || g === 'SSS'){ SFX.record(); }
+  else SFX.setBonus();
+  renderPets();
+  showHomeStatOnly();
+});
+$('btnPets').addEventListener('click', ()=>{
+  $('pullResult').textContent = '';
+  renderPets();
+  $('petModal').classList.remove('hidden');
+});
+$('btnPetClose').addEventListener('click', ()=> $('petModal').classList.add('hidden'));
 $('btnUpgrade').addEventListener('click', ()=>{
   renderUpgrades();
   $('upgradeModal').classList.remove('hidden');
@@ -1840,7 +2939,14 @@ function drawHero(){
   c.beginPath(); c.ellipse(110, 174, 60, 10, 0, 0, 7); c.fill();
   drawStar(34, 56 + Math.sin(heroT*1.4)*6, 11, STAR_TIERS[3]);
   drawStar(188, 44 + Math.cos(heroT*1.1)*6, 9, STAR_TIERS[1]);
-  drawPlayer(112, 172, heroT, { onGround:true, anim: heroT*2.4, dead:false, air:0 }, 1.7);
+  if (META.equipped && META.pets[META.equipped]){
+    const def = PET_BY_ID[META.equipped];
+    drawPet(108, 178, heroT, { onGround:true, gliding:false, dead:false, anim: heroT*2.4 },
+      { def, lv: META.pets[META.equipped], pw:0 }, 1.4);
+    drawPlayer(100, 178 - PET_BACK*1.4, heroT, { onGround:true, anim: heroT*2.4, dead:false, air:0 }, 1.35, { riding:true });
+  } else {
+    drawPlayer(112, 172, heroT, { onGround:true, anim: heroT*2.4, dead:false, air:0 }, 1.7);
+  }
   ctx = mainCtx;                             // 원래 캔버스로 복귀
 }
 
@@ -1874,14 +2980,19 @@ window.__test = {
   freshMeta, applyLoadedMeta, parseBackupCode, makeBackupCode,
   startRun, update, endRun, tryJump, stageOfM, curScore, render, groundTopAt,
   applyItem, startFever, buyUpgrade, classLevel, itemDur, scoreMult,
+  gachaPull, equipPet, PETS, petAbilityPw, ownedPetCount,
+  petBonusTotal, petPowerScore, petStars, petPassiveStars,
+  CHARS, charExpNeed, charTier, charPassive,
+  setHold(v){ HOLD = v; },
   setMeta(m){ META = m; },
   drawTo(c, fn){
     const old = ctx; ctx = c;
     try {
       fn({
-        player:(x,y,t,p,s)=>drawPlayer(x,y,t,p,s),
+        player:(x,y,t,p,s,o)=>drawPlayer(x,y,t,p,s,o),
         monster:(sx,top,m,t,s)=>{ ctx.save(); ctx.translate(sx,top); ctx.scale(s||1,s||1); ctx.translate(-sx,-top); drawMonster(sx,top,m,t); ctx.restore(); },
         star:(x,y,r,tier)=>drawStar(x,y,r,STAR_TIERS[tier]),
+        pet:(x,y,t,st,petObj,s)=>drawPet(x,y,t,st,petObj,s),
       });
     } finally { ctx = old; }
   },
