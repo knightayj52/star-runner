@@ -18,6 +18,19 @@
     font-family:'Jua', sans-serif; user-select:none; -webkit-user-select:none; }
   #cv { position:fixed; inset:0; width:100vw; height:100vh; display:block; }
 
+  /* ---------- 가로모드 안내 ---------- */
+  #rotate { position:fixed; inset:0; z-index:9999; background:linear-gradient(160deg,#3a4a80,#5a6ab0);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff;
+    text-align:center; gap:14px; padding:20px; }
+  #rotate.hidden { display:none; }
+  .rotate-phone { font-size:64px; animation:rotatePhone 1.8s ease-in-out infinite; }
+  @keyframes rotatePhone {
+    0%, 40% { transform:rotate(0deg); }
+    60%, 100% { transform:rotate(-90deg); }
+  }
+  .rotate-title { font-size:24px; font-weight:bold; }
+  .rotate-sub { font-size:15px; opacity:.9; line-height:1.5; }
+
   /* ---------- 공통 UI ---------- */
   .btn { display:inline-block; border:none; border-radius:18px; padding:12px 22px; min-height:48px;
     font-family:'Jua',sans-serif; font-size:19px; color:#fff; background:#ff8fab; cursor:pointer;
@@ -87,6 +100,32 @@
   .tip { font-size:13px; color:#8a9a8a; line-height:1.5; }
 
   /* ---------- 캐릭터 ---------- */
+  /* ---------- 도전과제/출석 ---------- */
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:#ff4d4d; vertical-align:middle; }
+  .tabRow { display:flex; gap:6px; margin-bottom:10px; }
+  .tabBtn { flex:1; padding:9px 4px; border:none; border-radius:12px; background:#e8ece4;
+    color:#7a8a7a; font-size:14px; cursor:pointer; min-height:44px; }
+  .tabBtn.active { background:#6cc24a; color:#fff; font-weight:bold; }
+  .qRow { display:flex; align-items:center; gap:8px; background:#f2f7ee; border-radius:14px;
+    padding:9px 10px; margin-bottom:8px; text-align:left; }
+  .qRow.done { background:#eaf7e2; }
+  .qInfo { flex:1; min-width:0; }
+  .qName { font-size:14px; color:#4a5a4a; }
+  .qDesc { font-size:12px; color:#8a9a8a; }
+  .qBar { height:8px; background:#dfe8d8; border-radius:5px; margin-top:5px; overflow:hidden; }
+  .qFill { height:100%; background:linear-gradient(90deg,#6cc24a,#a8d84a); border-radius:5px; }
+  .qReward { font-size:13px; color:#e6820a; white-space:nowrap; }
+  .qClaim { border:none; border-radius:12px; background:#f5a03c; color:#fff; font-size:13px;
+    padding:8px 12px; min-height:44px; min-width:64px; cursor:pointer; }
+  .qClaim:disabled { background:#c8cdc4; cursor:default; }
+  .qClaim.ready { background:#6cc24a; animation:qpulse .6s infinite alternate; }
+  @keyframes qpulse { from{filter:brightness(1);} to{filter:brightness(1.15);} }
+  .attendCell { display:inline-block; width:40px; padding:6px 0; margin:2px; border-radius:10px;
+    background:#f2f7ee; font-size:11px; color:#7a8a7a; text-align:center; vertical-align:top; }
+  .attendCell.got { background:#dfe8d8; opacity:.6; }
+  .attendCell.today { background:#ffe9b0; color:#c07a20; font-weight:bold; box-shadow:0 0 0 2px #f5a03c; }
+  .attendCell b { display:block; font-size:13px; color:#e6820a; }
+
   .charRow { display:flex; align-items:center; gap:8px; background:#f2f7ee; border-radius:14px;
     padding:8px 10px; margin-bottom:8px; text-align:left; border:3px solid transparent; cursor:pointer; }
   .charRow.equipped { border-color:#6cc24a; background:#eaf7e2; }
@@ -128,6 +167,34 @@
   #fade { position:fixed; inset:0; background:#122; opacity:0; pointer-events:none; z-index:50;
     transition:opacity .4s; }
   #fade.on { opacity:1; pointer-events:auto; }
+
+  /* ---------- 가로(landscape) & 낮은 높이 대응 ---------- */
+  @media (max-height: 500px) {
+    #home { gap:6px; }
+    #home h1 { font-size:30px; }
+    #home .sub { font-size:13px; margin-top:-4px; }
+    #heroCv { width:150px; height:120px; }
+    .homeStat { font-size:12px; padding:5px 12px; line-height:1.35; }
+    #homeBtns { gap:6px; }
+    .btn.mini { font-size:13px; padding:6px 10px; min-height:38px; }
+    .btn.green.big { font-size:20px; padding:10px 26px; }
+    /* 홈을 좌우 2열로: 왼쪽 캐릭터, 오른쪽 버튼 */
+    #home { flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center; gap:10px 24px; }
+    #home h1, #home .sub { width:100%; }
+    .card { padding:14px 16px; gap:8px; border-radius:18px; max-height:88vh; }
+    .card h2 { font-size:20px; }
+    .modal .card { width:min(94vw, 460px); }
+    /* 도전과제/소환수 등 그리드는 가로에서 더 여러 열 */
+    #petGrid { grid-template-columns:repeat(4, 1fr); }
+    #hud .hudBox { font-size:13px; padding:4px 10px; }
+    #hudScore .big, #hudDist .big { font-size:18px; }
+  }
+  /* 아주 낮은 높이(작은 폰 가로): 홈 통계 숨겨 공간 확보는 하지 않고 더 압축만 */
+  @media (max-height: 380px) {
+    #home h1 { font-size:24px; }
+    #heroCv { width:120px; height:96px; }
+    .btn.green.big { font-size:18px; padding:8px 22px; }
+  }
 </style>
 </head>
 <body>
@@ -153,7 +220,10 @@
     <div class="miniRow">
       <button class="btn mini" style="background:#5aa9e6;" id="btnChars">👧 캐릭터</button>
       <button class="btn mini" style="background:#6cc24a;" id="btnPets">🐾 소환수</button>
+    </div>
+    <div class="miniRow">
       <button class="btn mini" style="background:#f5a03c;" id="btnUpgrade">✨ 강화</button>
+      <button class="btn mini" style="background:#e57ab0;" id="btnQuest">🏅 도전과제 <span id="questDot" class="dot hidden"></span></button>
     </div>
     <div class="miniRow">
       <button class="btn mini" id="btnBackup">기기 이동 코드</button>
@@ -186,6 +256,34 @@
       <button class="btn green" id="btnRetry">다시 달리기</button>
       <button class="btn blue" id="btnHome">홈으로</button>
     </div>
+  </div>
+</div>
+
+<!-- 출석 보상 팝업 -->
+<div id="attendModal" class="overlay modal hidden">
+  <div class="card">
+    <h2>📅 출석 보상</h2>
+    <div class="tip">매일 접속하면 별을 드려요! 연속 출석할수록 더 많이!</div>
+    <div id="attendRow"></div>
+    <div id="attendStreak" style="font-size:16px;color:#e66a00;margin:6px 0;"></div>
+    <button class="btn green" id="btnAttendClaim">받기</button>
+    <button class="btn gray" id="btnAttendClose">닫기</button>
+  </div>
+</div>
+
+<!-- 도전과제 (업적/일퀘/도감) -->
+<div id="questModal" class="overlay modal hidden">
+  <div class="card" style="max-height:84vh; overflow-y:auto;">
+    <h2>🏅 도전과제</h2>
+    <div class="tabRow">
+      <button class="tabBtn active" data-tab="daily">📋 일일</button>
+      <button class="tabBtn" data-tab="ach">🏅 업적</button>
+      <button class="tabBtn" data-tab="dex">📖 도감</button>
+    </div>
+    <div id="tabDaily" class="tabPane"></div>
+    <div id="tabAch" class="tabPane hidden"></div>
+    <div id="tabDex" class="tabPane hidden"></div>
+    <button class="btn gray" id="btnQuestClose">닫기</button>
   </div>
 </div>
 
@@ -249,6 +347,13 @@
 </div>
 
 <div id="fade"></div>
+
+<!-- 가로모드 안내 (세로로 들었을 때) -->
+<div id="rotate" class="hidden">
+  <div class="rotate-phone">📱</div>
+  <div class="rotate-title">가로로 돌려주세요!</div>
+  <div class="rotate-sub">별바람 대모험은 가로 화면에서<br>즐길 수 있어요 😊</div>
+</div>
 
 <script>
 'use strict';
@@ -432,6 +537,160 @@ function classProgress(totalM){
 }
 const FLIGHT_ALT = 190;              // 하늘비행 고도 (지면 위 px)
 
+// ============ 리텐션 3종 세트 (업적 / 일일 퀘스트 / 출석 / 도감 보상) ============
+// 진행도 통계를 한 곳에서 계산 (누적 기준)
+function statValue(key){
+  switch(key){
+    case 'bestDist':  return Math.floor(META.bestDist);
+    case 'lifeStars': return META.lifeStars;
+    case 'stomps':    return META.stomps;
+    case 'totalM':    return Math.floor(META.totalM);
+    case 'pets':      return ownedPetCount();
+    case 'plays':     return META.plays;
+    case 'classLv':   return classLevel(META.totalM);
+    case 'bestScore': return META.bestScore;
+    default: return 0;
+  }
+}
+
+// ---- 업적: 목표 달성 시 별 보상 + 칭호 ----
+const ACHIEVEMENTS = [
+  { id:'run500',  name:'첫 질주',       desc:'한 판에 500m 달리기',      key:'bestDist', goal:500,   reward:60,  title:'새싹 러너' },
+  { id:'run1500', name:'바람의 아이',    desc:'한 판에 1,500m 달리기',    key:'bestDist', goal:1500,  reward:150, title:'바람의 아이' },
+  { id:'run3000', name:'별바람 마스터',  desc:'한 판에 3,000m 달리기',    key:'bestDist', goal:3000,  reward:400, title:'별바람 마스터' },
+  { id:'star1k',  name:'별 수집가',      desc:'별 누적 1,000개 모으기',   key:'lifeStars', goal:1000, reward:80,  title:'별 수집가' },
+  { id:'star5k',  name:'은하 수집가',    desc:'별 누적 5,000개 모으기',   key:'lifeStars', goal:5000, reward:250, title:'은하 수집가' },
+  { id:'stomp50', name:'통통 사냥꾼',    desc:'몬스터 50마리 밟기',       key:'stomps', goal:50,     reward:70,  title:null },
+  { id:'stomp300',name:'베리몽 천적',    desc:'몬스터 300마리 밟기',      key:'stomps', goal:300,    reward:200, title:'베리몽 천적' },
+  { id:'pet5',    name:'친구 다섯',      desc:'소환수 5종 모으기',        key:'pets', goal:5,        reward:120, title:null },
+  { id:'pet10',   name:'소환수 애호가',  desc:'소환수 10종 모으기',       key:'pets', goal:10,       reward:250, title:'소환수 애호가' },
+  { id:'pet16',   name:'도감 완성',      desc:'소환수 16종 모두 모으기',  key:'pets', goal:16,       reward:600, title:'전설의 조련사' },
+  { id:'class10', name:'베테랑',         desc:'클래스 레벨 10 달성',      key:'classLv', goal:10,    reward:150, title:'베테랑' },
+  { id:'play30',  name:'꾸준함의 힘',    desc:'30번 플레이하기',          key:'plays', goal:30,      reward:120, title:null },
+  { id:'score50k',name:'점수 사냥꾼',    desc:'한 판 5만 점 달성',        key:'bestScore', goal:50000,reward:300, title:'점수 사냥꾼' },
+];
+const ACH_BY_ID = {};
+for (const a of ACHIEVEMENTS) ACH_BY_ID[a.id] = a;
+// 완료했지만 보상 안 받은 목록 (판 종료 시 자동 지급하지 않고 배지로 표시)
+function checkAchievements(){
+  const newly = [];
+  for (const a of ACHIEVEMENTS){
+    if (!META.ach[a.id] && statValue(a.key) >= a.goal){
+      META.ach[a.id] = true;
+      META.stars += a.reward;
+      newly.push(a);
+    }
+  }
+  if (newly.length) saveMeta();
+  return newly;
+}
+function achDone(){ let n=0; for (const a of ACHIEVEMENTS) if (META.ach[a.id]) n++; return n; }
+
+// ---- 칭호: 업적으로 얻은 것 중 하나 장착 ----
+function ownedTitles(){
+  const list = [];
+  for (const a of ACHIEVEMENTS){ if (a.title && META.ach[a.id]) list.push({ id:a.id, title:a.title }); }
+  return list;
+}
+
+// ---- 일일 퀘스트: 매일 3개, 하루 단위 갱신 ----
+const DAILY_POOL = [
+  { id:'d_dist',  type:'dist',  text:m=>m+'m 달리기',        goals:[400,700,1000], reward:50 },
+  { id:'d_star',  type:'star',  text:m=>'별 '+m+'개 모으기',  goals:[60,100,150],   reward:45 },
+  { id:'d_stomp', type:'stomp', text:m=>'몬스터 '+m+'마리 밟기', goals:[8,15,25],   reward:45 },
+  { id:'d_fever', type:'fever', text:m=>'피버 타임 '+m+'번 발동', goals:[1,2,3],    reward:55 },
+  { id:'d_item',  type:'item',  text:m=>'아이템 '+m+'개 먹기', goals:[3,6,10],     reward:40 },
+  { id:'d_play',  type:'play',  text:m=>m+'판 플레이하기',     goals:[2,3,5],       reward:40 },
+];
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function ensureDaily(){
+  const today = todayStr();
+  if (META.daily && META.daily.date === today) return;
+  // 새 하루: 풀에서 3개 뽑고 각자 난이도(goal) 하나 선택
+  const pool = DAILY_POOL.slice();
+  const picks = [];
+  // 날짜 기반 결정적 셔플 (같은 날 새로고침해도 동일)
+  let seed = 0; for (const ch of today) seed = (seed*31 + ch.charCodeAt(0)) & 0xffffff;
+  function rnd(){ seed = (seed*1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  for (let i=0;i<3 && pool.length;i++){
+    const idx = Math.floor(rnd()*pool.length);
+    const q = pool.splice(idx,1)[0];
+    const gi = Math.floor(rnd()*q.goals.length);
+    picks.push({ id:q.id, type:q.type, goal:q.goals[gi], prog:0, done:false, claimed:false, reward:q.reward });
+  }
+  META.daily = { date:today, quests:picks };
+  saveMeta();
+}
+function dailyText(q){
+  const def = DAILY_POOL.find(d=>d.id===q.id);
+  return def ? def.text(q.goal) : '';
+}
+// 판 종료 시 일퀘 진행 반영 (per-run 통계 전달)
+function progressDaily(runStats){
+  ensureDaily();
+  let anyDone = false;
+  for (const q of META.daily.quests){
+    if (q.done) continue;
+    const add = runStats[q.type] || 0;
+    if (add > 0){ q.prog = Math.min(q.goal, q.prog + add); if (q.prog >= q.goal){ q.done = true; anyDone = true; } }
+  }
+  saveMeta();
+  return anyDone;
+}
+function claimDaily(idx){
+  const q = META.daily.quests[idx];
+  if (!q || !q.done || q.claimed) return false;
+  q.claimed = true; META.stars += q.reward; saveMeta(); return true;
+}
+
+// ---- 출석 보상: 접속일 연속 스트릭 ----
+const ATTEND_REWARDS = [30, 40, 50, 60, 80, 100, 150];   // 1~7일차(이후 7일차 유지)
+function attendReward(streak){ return ATTEND_REWARDS[Math.min(streak, ATTEND_REWARDS.length) - 1]; }
+function refreshAttend(){
+  const today = todayStr();
+  const at = META.attend;
+  if (at.last === today){ return; }        // 오늘 이미 처리
+  // 어제였는지 확인 -> 연속, 아니면 리셋
+  const y = new Date(); y.setDate(y.getDate()-1);
+  const yStr = y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
+  at.streak = (at.last === yStr) ? at.streak + 1 : 1;
+  at.last = today;
+  at.claimedToday = false;
+  saveMeta();
+}
+function claimAttend(){
+  const at = META.attend;
+  if (at.claimedToday) return 0;
+  const r = attendReward(at.streak);
+  META.stars += r; at.claimedToday = true; saveMeta();
+  return r;
+}
+
+// ---- 도감 완성 보상: 수집률 구간마다 영구 점수 보너스 ----
+const DEX_TIERS = [
+  { need:3,  bonus:0.01, name:'견습 조련사' },
+  { need:6,  bonus:0.02, name:'숙련 조련사' },
+  { need:10, bonus:0.03, name:'전문 조련사' },
+  { need:13, bonus:0.04, name:'명예 조련사' },
+  { need:16, bonus:0.05, name:'전설의 조련사' },
+];
+function dexBonusTotal(){
+  let b = 0;
+  const owned = ownedPetCount();
+  for (let i=0;i<DEX_TIERS.length;i++){ if (owned >= DEX_TIERS[i].need) b += DEX_TIERS[i].bonus; }
+  return b;
+}
+function checkDexTiers(){
+  const owned = ownedPetCount();
+  const newly = [];
+  for (let i=0;i<DEX_TIERS.length;i++){
+    if (!META.dexTiers[i] && owned >= DEX_TIERS[i].need){ META.dexTiers[i] = true; newly.push(DEX_TIERS[i]); }
+  }
+  if (newly.length) saveMeta();
+  return newly;
+}
+
+
 /* ---------------- [상태] 영구 저장 데이터 ---------------- */
 function freshMeta(){
   return {
@@ -450,6 +709,14 @@ function freshMeta(){
     totalM: 0,         // 누적 달린 거리 (클래스 레벨 재료)
     plays: 0,
     sound: true,
+    // ---- 리텐션(5단계) ----
+    ach: {},           // 완료한 업적 id: true
+    daily: null,       // { date:'YYYY-MM-DD', quests:[{id,type,goal,prog,done,claimed}] }
+    attend: { last:null, streak:0, claimedToday:false },  // 출석
+    dexTiers: {},      // 받은 도감 보상 구간 idx: true
+    bestFever: 0,      // 한 판 최고 피버 횟수 (업적용)
+    bestCombo: 0,      // 한 판 최고 콤보
+    title: null,       // 장착 칭호 id
   };
 }
 let META = freshMeta();
@@ -464,6 +731,12 @@ function applyLoadedMeta(d){
   m.chars = (d && d.chars) || {};
   if (!m.chars.rico) m.chars.rico = { lv:1, exp:0 };
   if (!m.charEq || !m.chars[m.charEq] || !CHAR_BY_ID[m.charEq]) m.charEq = 'rico';
+  m.ach = (d && d.ach) || {};
+  m.dexTiers = (d && d.dexTiers) || {};
+  m.attend = (d && d.attend) || { last:null, streak:0, claimedToday:false };
+  m.daily = (d && d.daily) || null;
+  if (typeof m.bestFever !== 'number') m.bestFever = 0;
+  if (typeof m.bestCombo !== 'number') m.bestCombo = 0;
   m.v = 1;
   META = m;
 }
@@ -577,6 +850,8 @@ function freshRun(){
     pet: null,               // { def, lv, pw } 장착 소환수
     char: null,              // { def, lv } 장착 캐릭터
     stomps: 0,               // 이번 판 밟은 몬스터 수
+    feverCount: 0,           // 이번 판 피버 발동 횟수
+    itemCount: 0,            // 이번 판 먹은 아이템 수
     petStam: 0,              // 비행 소환수 남은 비행 시간
     gliding: false,          // 활강 중 (연출용)
     eff: { magnet:0, giant:0, flight:0, invuln:0, dash:0 },
@@ -593,18 +868,43 @@ const cv = document.getElementById('cv');
 const mainCtx = cv.getContext('2d');
 let ctx = mainCtx;   // 렌더 함수들이 쓰는 현재 컨텍스트 (홈 미리보기 때 잠시 교체)
 let W = 360, H = 640, DPR = 1, GY = 460;   // GY = 기본 지면 윗면 y
+let isPortrait = false;
 function resize(){
   DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = window.innerWidth; H = window.innerHeight;
-  cv.width = Math.floor(W * DPR); cv.height = Math.floor(H * DPR);
+  const vw = window.innerWidth, vh = window.innerHeight;
+  // 세로(높이 > 너비)이면서 터치 기기로 보이면 가로 안내를 띄운다.
+  // PC(넓은 창)는 항상 가로로 취급 -> 정상 플레이.
+  const touchLike = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+  isPortrait = touchLike && (vh > vw * 1.05);
+  const rot = document.getElementById('rotate');
+  if (rot) rot.classList.toggle('hidden', !isPortrait);
+
+  if (isPortrait){
+    // 세로일 때도 캔버스는 계속 유효하게 유지(회전 후 즉시 이어지도록)
+    W = vw; H = vh;
+  } else {
+    W = vw; H = vh;
+  }
+  cv.width = Math.max(1, Math.floor(W * DPR));
+  cv.height = Math.max(1, Math.floor(H * DPR));
   mainCtx.setTransform(DPR,0,0,DPR,0,0);
-  GY = Math.floor(H * 0.74);
+  // 가로 화면은 높이가 짧으므로 지면을 더 아래(비율 상향)로 -> 위쪽 하늘 공간 확보
+  const groundRatio = (W > H) ? 0.80 : 0.74;
+  GY = Math.floor(H * groundRatio);
+  // 세로에서 잠시 멈춤 처리: 플레이 중이면 자동 일시정지
+  if (isPortrait && typeof scene !== 'undefined' && scene === 'run' && typeof paused !== 'undefined' && !paused){
+    if (typeof doPause === 'function') doPause(true);
+  }
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', ()=> setTimeout(resize, 120));
 resize();
 
 const PLAYER_SX = () => Math.floor(W * 0.26);  // 플레이어의 화면 x
 const PW = 26, PH = 54;                        // 플레이어 충돌 크기(반폭, 높이)
+// 화면 높이에 따른 시각 스케일 (가로 폰은 높이가 짧아 캐릭터/연출을 살짝 축소)
+function viewScale(){ return Math.max(0.72, Math.min(1.1, H / 560)); }
+function flightAlt(){ return Math.min(FLIGHT_ALT, (GY - 30) * 0.55); }  // 짧은 화면에선 비행 고도 축소
 
 /* ---------------- 결정적 난수 ---------------- */
 function hash1(x){ const s = Math.sin(x * 127.1) * 43758.5453; return s - Math.floor(s); }
@@ -921,7 +1221,7 @@ function update(dt){
   const px = R.worldX;                     // 플레이어 월드 x
   if (E.flight > 0){
     // 하늘비행: 고도 유지, 중력 무시
-    const targetY = GY - FLIGHT_ALT;
+    const targetY = GY - flightAlt();
     p.y += (targetY - p.y) * Math.min(1, dt * 6);
     p.vy = 0; p.onGround = false; p.air = 1;
     p.anim += dt * 4;
@@ -1054,6 +1354,7 @@ function update(dt){
     if (it.got) continue;
     if (Math.abs(it.x - px) < 40 && Math.abs(it.y - (p.y - PH*0.5)) < 56){
       it.got = true;
+      R.itemCount = (R.itemCount || 0) + 1;
       sparkle(it.x, it.y, '#ffffff');
       applyItem(it.type);
     }
@@ -1134,7 +1435,7 @@ function scoreMult(){
   return 1 + lv * 0.01 + (META.up.score || 0) * 0.04
        + petBonus('score') / 100                    // 소환수 패시브
        + (chLv - 1) * 0.005                         // 캐릭터 레벨: 레벨당 +0.5%
-       + ownedPetCount() * 0.005;                   // 도감 보너스: 보유 1종당 +0.5%
+       + dexBonusTotal();                           // 도감 완성 보상: 수집률 구간별 영구 보너스
 }
 function curScore(){
   return Math.floor((RUN.distM * 10 + RUN.gained) * scoreMult());
@@ -1174,6 +1475,7 @@ function startFever(){
   if (R.fever.active) return;
   const dur = 6 + (META.up.fever || 0) * 0.5;
   R.fever.active = true; R.fever.t = dur; R.fever.dur = dur; R.fever.g = 0;
+  R.feverCount = (R.feverCount || 0) + 1;
   R.fever.untilX = R.worldX + R.speed * dur + 900;
   // 이미 생성된 구간의 절벽을 잇고 장애물을 치운다
   addSeg(R.worldX + 120, (R.fever.untilX + 500) - (R.worldX + 120), GY);
@@ -1366,18 +1668,19 @@ function render(){
     ctx.fillStyle = 'rgba(180,225,255,0.35)';
     ctx.beginPath(); ctx.ellipse(PLAYER_SX()-6, R.player.y - 34, 46, 40, 0, 0, 7); ctx.fill();
   }
-  let psc = 1.15;
+  const baseSc = 1.15 * viewScale();
+  let psc = baseSc;
   if (E2.giant > 0){
-    psc = 1.15 * (1.55 + Math.sin(R.t*10)*0.04);
-    if (E2.giant < 1 && Math.floor(R.t*14)%2===0) psc = 1.15;   // 끝나기 직전 깜빡임
+    psc = baseSc * (1.55 + Math.sin(R.t*10)*0.04);
+    if (E2.giant < 1 && Math.floor(R.t*14)%2===0) psc = baseSc;   // 끝나기 직전 깜빡임
   }
   if (E2.invuln > 0 && Math.floor(R.t*16)%2===0) ctx.globalAlpha = 0.55;
   let riderY = R.player.y;
   if (R.pet){
     drawPet(PLAYER_SX() - 2, R.player.y, R.t,
       { onGround:R.player.onGround, gliding:R.gliding, dead:R.player.dead, anim:R.player.anim },
-      R.pet, 1.1);
-    riderY -= PET_BACK;                          // 신수의 안장(등 파인 곳)에 앉기
+      R.pet, 1.1 * viewScale());
+    riderY -= PET_BACK * viewScale();            // 신수의 안장(등 파인 곳)에 앉기
   }
   drawPlayer(PLAYER_SX() + (R.pet ? -6 : 0), riderY, R.t, R.player, psc, { riding: !!R.pet });
   ctx.globalAlpha = 1;
@@ -2585,7 +2888,128 @@ function showHome(){
     '🐾 ' + (eqDef ? '파트너: <b>' + eqDef.name + '</b> (' + AB_NAME[eqDef.ab] + ')' : '파트너 없음') +
     ' · 도감 <b>' + ownedPetCount() + '/' + PETS.length + '</b>';
   $('btnSound').textContent = '소리: ' + (META.sound ? '켬' : '끔');
+  refreshAttend();
+  ensureDaily();
+  updateQuestDot();
+  // 첫 홈 진입 시 출석 보상 안 받았으면 팝업
+  if (!META.attend.claimedToday && !window._attendShown){
+    window._attendShown = true;
+    setTimeout(()=>{ openAttend(); }, 400);
+  }
 }
+// 받을 수 있는 보상이 있으면 빨간 점 표시
+function questReadyCount(){
+  let n = 0;
+  ensureDaily();
+  for (const q of META.daily.quests) if (q.done && !q.claimed) n++;
+  if (!META.attend.claimedToday) n++;
+  return n;
+}
+function updateQuestDot(){
+  const dot = $('questDot');
+  if (dot) dot.classList.toggle('hidden', questReadyCount() === 0);
+}
+
+/* ---- 출석 팝업 ---- */
+function openAttend(){
+  const at = META.attend;
+  let h = '';
+  for (let i=1;i<=7;i++){
+    const cls = i < at.streak ? 'got' : (i === Math.min(at.streak,7) ? 'today' : '');
+    const rw = attendReward(i);
+    h += '<div class="attendCell ' + cls + '">' + i + '일<b>⭐' + rw + '</b></div>';
+  }
+  $('attendRow').innerHTML = h;
+  $('attendStreak').textContent = '🔥 연속 출석 ' + at.streak + '일차';
+  const btn = $('btnAttendClaim');
+  btn.disabled = at.claimedToday;
+  btn.textContent = at.claimedToday ? '오늘 받았어요!' : ('⭐' + attendReward(Math.min(at.streak,7)) + ' 받기');
+  $('attendModal').classList.remove('hidden');
+}
+$('btnAttendClaim').addEventListener('click', ()=>{
+  const r = claimAttend();
+  if (r > 0){ SFX.setBonus(); confettiBurst(); banner('출석 보상 ⭐' + r + ' 획득!'); openAttend(); showHomeStatOnly(); updateQuestDot(); }
+});
+$('btnAttendClose').addEventListener('click', ()=>{ $('attendModal').classList.add('hidden'); });
+
+/* ---- 도전과제 모달 (일일/업적/도감 탭) ---- */
+function renderDaily(){
+  ensureDaily();
+  let h = '<div class="tip">매일 자정에 새로워져요! 완료하면 별을 받아요.</div>';
+  META.daily.quests.forEach((q, i)=>{
+    const pct = Math.floor(q.prog / q.goal * 100);
+    h += '<div class="qRow' + (q.done ? ' done' : '') + '">' +
+      '<div class="qInfo">' +
+        '<div class="qName">' + dailyText(q) + '</div>' +
+        '<div class="qBar"><div class="qFill" style="width:' + pct + '%"></div></div>' +
+        '<div class="qDesc">' + fmt(q.prog) + ' / ' + fmt(q.goal) + '</div>' +
+      '</div>' +
+      '<button class="qClaim ' + (q.done && !q.claimed ? 'ready' : '') + '" data-daily="' + i + '" ' +
+        (q.done && !q.claimed ? '' : 'disabled') + '>' +
+        (q.claimed ? '완료✓' : '⭐' + q.reward) +
+      '</button>' +
+    '</div>';
+  });
+  const pane = $('tabDaily');
+  pane.innerHTML = h;
+  pane.querySelectorAll('button[data-daily]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if (claimDaily(+b.dataset.daily)){ SFX.setBonus(); renderDaily(); showHomeStatOnly(); updateQuestDot(); }
+    });
+  });
+}
+function renderAch(){
+  let h = '<div class="tip">달성한 업적: <b>' + achDone() + ' / ' + ACHIEVEMENTS.length + '</b></div>';
+  for (const a of ACHIEVEMENTS){
+    const done = !!META.ach[a.id];
+    const cur = Math.min(statValue(a.key), a.goal);
+    const pct = Math.floor(cur / a.goal * 100);
+    h += '<div class="qRow' + (done ? ' done' : '') + '">' +
+      '<div class="qInfo">' +
+        '<div class="qName">' + (done ? '✅ ' : '') + a.name + (a.title ? ' <span style="color:#b088d8;font-size:11px;">칭호: ' + a.title + '</span>' : '') + '</div>' +
+        '<div class="qDesc">' + a.desc + '</div>' +
+        (done ? '' : '<div class="qBar"><div class="qFill" style="width:' + pct + '%"></div></div><div class="qDesc">' + fmt(cur) + ' / ' + fmt(a.goal) + '</div>') +
+      '</div>' +
+      '<div class="qReward">⭐' + a.reward + '</div>' +
+    '</div>';
+  }
+  $('tabAch').innerHTML = h;
+}
+function renderDex(){
+  const owned = ownedPetCount();
+  let h = '<div class="tip">소환수를 모을수록 영구 점수 보너스! 현재 <b>' + owned + '/' + PETS.length + '</b> · 보너스 <b>+' + Math.round(dexBonusTotal()*100) + '%</b></div>';
+  for (let i=0;i<DEX_TIERS.length;i++){
+    const dt2 = DEX_TIERS[i];
+    const reached = owned >= dt2.need;
+    h += '<div class="qRow' + (reached ? ' done' : '') + '">' +
+      '<div class="qInfo">' +
+        '<div class="qName">' + (reached ? '✅ ' : '🔒 ') + dt2.name + '</div>' +
+        '<div class="qDesc">소환수 ' + dt2.need + '종 수집 · 점수 +' + Math.round(dt2.bonus*100) + '%</div>' +
+      '</div>' +
+      '<div class="qReward">' + owned + '/' + dt2.need + '</div>' +
+    '</div>';
+  }
+  $('tabDex').innerHTML = h;
+}
+function openQuest(tab){
+  renderDaily(); renderAch(); renderDex();
+  switchTab(tab || 'daily');
+  $('questModal').classList.remove('hidden');
+}
+function switchTab(tab){
+  for (const t of ['daily','ach','dex']){
+    $('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('hidden', t !== tab);
+  }
+  document.querySelectorAll('#questModal .tabBtn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+}
+document.querySelectorAll('#questModal .tabBtn').forEach(b=>{
+  b.addEventListener('click', ()=> switchTab(b.dataset.tab));
+});
+$('btnQuest').addEventListener('click', ()=> openQuest('daily'));
+$('btnQuestClose').addEventListener('click', ()=>{ $('questModal').classList.add('hidden'); updateQuestDot(); });
+
 function startRun(){
   RUN = freshRun();
   RUN.player.y = GY;
@@ -2645,7 +3069,16 @@ function endRun(){
   let isRecord = false;
   if (score > META.bestScore){ META.bestScore = score; isRecord = true; }
   if (dist > META.bestDist) META.bestDist = dist;
+  if ((R.feverCount||0) > META.bestFever) META.bestFever = R.feverCount||0;
   saveMeta();
+
+  // 일일 퀘스트 진행 + 업적/도감 보상 체크
+  const dailyDone = progressDaily({
+    dist: dist, star: R.starsGot, stomp: R.stomps,
+    fever: R.feverCount||0, item: R.itemCount||0, play: 1,
+  });
+  const newAch = checkAchievements();
+  const newDex = checkDexTiers();
 
   scene = 'result';
   $('hud').classList.add('hidden');
@@ -2657,10 +3090,13 @@ function endRun(){
   const nr = $('newRecord');
   const msgs = [];
   if (newChar) msgs.push('🎊 새 캐릭터 [' + newChar.name + '] 합류!');
+  if (newAch.length) msgs.push('🏅 업적 ' + newAch.length + '개 달성! (+' + newAch.reduce((s,a)=>s+a.reward,0) + '⭐)');
+  if (newDex.length) msgs.push('📖 도감 보상 획득!');
   if (charLeveled) msgs.push('👧 ' + (R.char ? R.char.def.name : '리코') + ' Lv.' + ce.lv + '!');
   if (lvAfter > lvBefore) msgs.push('🎖️ 클래스 Lv.' + lvAfter + '!');
+  if (dailyDone) msgs.push('📋 일일 퀘스트 완료!');
   if (isRecord) msgs.push('🎉 새로운 최고 기록!');
-  nr.textContent = msgs.join(' ');
+  nr.innerHTML = msgs.join('<br>');
   nr.classList.toggle('hidden', msgs.length === 0);
   $('resultModal').classList.remove('hidden');
   if (msgs.length > 0){ SFX.record(); confettiBurst(); }
@@ -2983,6 +3419,8 @@ window.__test = {
   gachaPull, equipPet, PETS, petAbilityPw, ownedPetCount,
   petBonusTotal, petPowerScore, petStars, petPassiveStars,
   CHARS, charExpNeed, charTier, charPassive,
+  ACHIEVEMENTS, checkAchievements, achDone, DAILY_POOL, ensureDaily, progressDaily, claimDaily,
+  refreshAttend, claimAttend, attendReward, DEX_TIERS, dexBonusTotal, checkDexTiers, statValue,
   setHold(v){ HOLD = v; },
   setMeta(m){ META = m; },
   drawTo(c, fn){
