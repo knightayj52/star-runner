@@ -817,6 +817,95 @@ const SFX = {
   fever(){ [520,660,780,1040,1300].forEach((f,i)=>setTimeout(()=>beep(f,.14,'triangle',.11), i*70)); },
 };
 
+/* ================= 배경음악 (WebAudio 실시간 합성, 파일 불필요) ================= */
+// 경쾌한 8비트풍 루프: 멜로디(사각파) + 베이스(삼각파). 스텝 시퀀서로 스케줄링.
+const BGM = (function(){
+  const NOTE = {                                   // 음이름 -> 주파수
+    0:0,  C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, B4:493.88,
+    C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880.00, B5:987.77,
+    C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, B3:246.94, C2:65.41, G2:98.00, A2:110.00, F2:87.31 };
+  // 밝은 장조 루프 (16스텝 x 4마디). 0 = 쉼표
+  const MELODY = [
+    'C5','E5','G5','E5', 'C5','E5','G5','A5', 'G5','E5','C5','E5', 'D5','E5','D5',0,
+    'F5','A5','C5','A5', 'F5','A5','G5','E5', 'C5','E5','G5','E5', 'D5',0,'G4',0,
+    'E5','G5','C5','G5', 'E5','G5','E5','C5', 'A4','C5','E5','C5', 'G4','A4','B4',0,
+    'C5','E5','D5','G5', 'E5','C5','A4','G4', 'F4','A4','G4','E4', 'C4',0,0,0,
+  ];
+  const BASS = [
+    'C3',0,'G3',0,'C3',0,'G2',0, 'C3',0,'G3',0,'G2',0,'G3',0,
+    'F2',0,'C3',0,'F2',0,'C3',0, 'C3',0,'G2',0,'G3',0,'G2',0,
+    'A2',0,'E3',0,'A2',0,'E3',0, 'F2',0,'C3',0,'G2',0,'G3',0,
+    'C3',0,'G3',0,'A2',0,'E3',0, 'F2',0,'G2',0,'C3',0,'C3',0,
+  ];
+  let timer = null, step = 0, playing = false;
+  let master = null;
+  const STEP_MS = 150;                             // 한 스텝 길이 (약 100 BPM의 16분음표)
+  function ensureMaster(){
+    const ac = audio(); if (!ac) return null;
+    if (!master){ master = ac.createGain(); master.gain.value = 0.0; master.connect(ac.destination); }
+    return master;
+  }
+  function playNote(freq, dur, type, vol){
+    const ac = audio(); if (!ac || !freq) return;
+    const m = ensureMaster(); if (!m) return;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.value = freq;
+    const t0 = ac.currentTime;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(m);
+    o.start(t0); o.stop(t0 + dur + 0.02);
+  }
+  function tick(){
+    if (!playing) return;
+    const mel = NOTE[MELODY[step]] || 0;
+    const bas = NOTE[BASS[step]] || 0;
+    if (mel) playNote(mel, 0.16, 'square', 0.14);
+    if (bas) playNote(bas, 0.22, 'triangle', 0.16);
+    // 가벼운 하이햇(짝수 스텝)
+    if (step % 2 === 0){ const ac=audio(); if(ac){ const m=ensureMaster(); if(m){ const b=ac.createBufferSource(); const buf=ac.createBuffer(1,600,ac.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<600;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/600,3); b.buffer=buf; const g=ac.createGain(); g.gain.value=0.03; b.connect(g); g.connect(m); b.start(); } } }
+    step = (step + 1) % MELODY.length;
+  }
+  return {
+    start(fast){
+      if (!META.sound){ return; }
+      const ac = audio(); if (!ac) return;
+      if (ac.state === 'suspended') ac.resume();
+      const m = ensureMaster(); if (!m) return;
+      // 페이드 인
+      m.gain.cancelScheduledValues(ac.currentTime);
+      m.gain.setValueAtTime(m.gain.value, ac.currentTime);
+      m.gain.linearRampToValueAtTime(0.5, ac.currentTime + 0.6);
+      if (playing){ this.setTempo(fast); return; }
+      playing = true;
+      clearInterval(timer);
+      timer = setInterval(tick, fast ? STEP_MS*0.8 : STEP_MS);
+      this._fast = !!fast;
+    },
+    setTempo(fast){
+      if (!playing || this._fast === !!fast) return;
+      this._fast = !!fast;
+      clearInterval(timer);
+      timer = setInterval(tick, fast ? STEP_MS*0.8 : STEP_MS);
+    },
+    stop(){
+      const ac = audio();
+      if (ac && master){ master.gain.cancelScheduledValues(ac.currentTime); master.gain.linearRampToValueAtTime(0.0001, ac.currentTime + 0.4); }
+      setTimeout(()=>{ playing = false; clearInterval(timer); }, 420);
+    },
+    pause(){
+      const ac = audio();
+      if (ac && master){ master.gain.cancelScheduledValues(ac.currentTime); master.gain.linearRampToValueAtTime(0.0001, ac.currentTime + 0.2); }
+    },
+    resume(){
+      const ac = audio();
+      if (ac && master && playing && META.sound){ master.gain.linearRampToValueAtTime(0.5, ac.currentTime + 0.3); }
+    },
+    isPlaying(){ return playing; },
+  };
+})();
+
 /* ---------------- [상태] 한 판(run) 상태 ---------------- */
 let scene = 'home';          // home | run | result
 let paused = false;
@@ -970,8 +1059,8 @@ const PATTERNS = [
     if (hash2(x, 4) < 0.30) addItem(x + w*0.6, GY-120, pickItemType(x, st));
     return w;
   },
-  function gapJump(x, st){                       // 절벽 점프 + 아치 별
-    const lead = 260; const gap = 170 + st*26 + Math.floor(hash1(x)*50);
+  function gapJump(x, st){                       // 절벽 점프 + 아치 별 (후반 폭 확대)
+    const lead = 260; const gap = 170 + st*34 + Math.floor(hash1(x)*50);
     const tail = 340;
     addSeg(x, lead, GY);
     starArc(x + lead - 40, GY-120, 6, (gap+90)/5, Math.min(STAGES[st].starTier+1,4));
@@ -988,11 +1077,12 @@ const PATTERNS = [
     starLine(x+435, p2-46, 3, 48, 4);
     return w;
   },
-  function monsterRow(x, st){                    // 몬스터 밟기 구간
-    const n = 2 + (st>=2 ? 1:0);
-    const w = 300 + n*150 + 200;
+  function monsterRow(x, st){                    // 몬스터 밟기 구간 (후반에 촘촘·다수)
+    const n = 2 + Math.min(3, Math.floor(st * 0.7));         // st5 -> 5마리
+    const spacing = Math.max(105, 150 - st*8);               // 후반일수록 간격 좁아짐
+    const w = 300 + n*spacing + 200;
     addSeg(x, w, GY);
-    for (let i=0;i<n;i++) addMonster(x + 260 + i*150, GY, st>=1 && hash2(x,i)<0.5, st>=2);
+    for (let i=0;i<n;i++) addMonster(x + 260 + i*spacing, GY, st>=1 && hash2(x,i)<0.5, st>=2);
     starLine(x+250, GY-150, n+2, 130, STAGES[st].starTier);
     if (hash2(x, 5) < 0.22) addItem(x + 150, GY-110, hash2(x,6)<0.5 ? 'magnet' : 'giant');
     return w;
@@ -1044,6 +1134,44 @@ const PATTERNS = [
     addSeg(cx, 320, GY);
     return cx + 320 - x;
   },
+  function gauntlet(x, st){                      // 복합 관문: 몬스터+가시 교차 (st3+)
+    const w = 1200;
+    addSeg(x, w, GY);
+    let cx = x + 340;                                        // 진입 여유
+    const items = ['m','s','m','s'];                         // 4개(넘을 수 있게)
+    for (let i=0;i<items.length;i++){
+      if (items[i] === 'm') addMonster(cx, GY, hash2(x,i)<0.5, true);
+      else addSpike(cx, GY);
+      cx += Math.max(150, 185 - st*5);                       // 하한 150
+    }
+    starLine(x+300, GY-140, 5, 130, Math.min(STAGES[st].starTier+1,4));
+    return w;
+  },
+  function narrowRelay(x, st){                   // 발판 릴레이 (연속 점프, 넘을 수 있게 여유)
+    const gap = 120 + st*8;
+    const plW = Math.max(120, 160 - st*8);                   // 발판폭 하한 120
+    const heights = [60, 100, 75, 110, 80];                  // 높이차 완만
+    addSeg(x, 240, GY);
+    let cx = x + 240 + gap;
+    for (let i=0;i<heights.length;i++){
+      const top = GY - heights[i];
+      addSeg(cx, plW, top);
+      starLine(cx + plW*0.3, top - 44, 2, 40, 4);
+      cx += plW + gap;
+    }
+    addSeg(cx, 320, GY);
+    return cx + 320 - x;
+  },
+  function spikeGapCombo(x, st){                 // 절벽 건너 착지 후 가시 (반응 요구, 여유 확보)
+    const lead = 240, gap = 170 + st*14, mid = 300;
+    addSeg(x, lead, GY);
+    starArc(x + lead - 30, GY-120, 5, (gap+70)/4, STAGES[st].starTier);
+    addSeg(x + lead + gap, mid, GY);
+    addSpike(x + lead + gap + mid*0.62, GY);                 // 착지 후 한 박자 뒤 가시
+    const gap2 = 160 + st*12;
+    addSeg(x + lead + gap + mid + gap2, 320, GY);
+    return lead + gap + mid + gap2 + 320;
+  },
 ];
 function feverPattern(x){
   // 피버 구간: 장애물 없는 평지 + 물결치는 별밭
@@ -1064,12 +1192,13 @@ function genAhead(){
       continue;
     }
     const st = RUN.stage;
-    let pool = [0,0,1,3];                        // 초반: 평지/절벽/몬스터
-    if (st >= 1) pool = [0,1,1,2,3,4,6];
-    if (st >= 2) pool = [0,1,2,3,3,4,5,6];
-    if (st >= 3) pool = [1,2,3,4,5,6,6,7];
-    if (st >= 4) pool = [1,2,4,5,5,6,7,7];
-    if (st >= 5) pool = [1,4,5,5,6,6,7,7];
+    // 단계가 오를수록 어려운 복합 패턴(8:관문,9:릴레이,10:절벽+가시)의 비중 증가
+    let pool = [0,0,1,3];                        // 초반: 평지/절벽/몬스터 (여유롭게)
+    if (st >= 1) pool = [0,0,1,1,2,3,4,6];
+    if (st >= 2) pool = [0,1,2,3,3,4,5,6,8];
+    if (st >= 3) pool = [1,2,3,4,5,6,7,8,9,10];
+    if (st >= 4) pool = [1,4,5,6,7,8,8,9,9,10,10];
+    if (st >= 5) pool = [4,5,6,7,8,8,9,9,10,10,10];
     const pick = pool[Math.floor(hash1(RUN.genX*0.013) * pool.length)];
     RUN.genX += PATTERNS[pick](RUN.genX, st);
   }
@@ -1209,6 +1338,7 @@ function update(dt){
       bombBlast();
       E.invuln = Math.max(E.invuln, 1.5);
       banner('피버 끝! 계속 달려!');
+      BGM.setTempo(false);
     }
   }
 
@@ -1476,6 +1606,7 @@ function startFever(){
   const dur = 6 + (META.up.fever || 0) * 0.5;
   R.fever.active = true; R.fever.t = dur; R.fever.dur = dur; R.fever.g = 0;
   R.feverCount = (R.feverCount || 0) + 1;
+  BGM.setTempo(true);
   R.fever.untilX = R.worldX + R.speed * dur + 900;
   // 이미 생성된 구간의 절벽을 잇고 장애물을 치운다
   addSeg(R.worldX + 120, (R.fever.untilX + 500) - (R.worldX + 120), GY);
@@ -1513,6 +1644,7 @@ function die(reason){
     return;
   }
   p.dead = true; p.deadT = 0; p.vy = -520;
+  RUN.lastDeath = reason;
   RUN.shakeT = .35;
   SFX.die();
 }
@@ -2872,6 +3004,7 @@ function fadeTo(fn){
 }
 function showHome(){
   scene = 'home'; paused = false;
+  BGM.stop();
   $('home').classList.remove('hidden');
   $('hud').classList.add('hidden');
   $('feverBar').classList.add('hidden');
@@ -3034,6 +3167,7 @@ function startRun(){
   $('resultModal').classList.add('hidden');
   $('hud').classList.remove('hidden');
   $('feverBar').classList.remove('hidden');
+  BGM.start(false);
   if (RUN.pet){
     const abTip = { jump3:'과 함께: 공중에서 한 번 더! 3단 점프', glide:'와 함께: 꾹 누르면 활강!', float:'와 함께: 꾹 누르면 비행!' };
     banner(RUN.pet.def.name + abTip[RUN.pet.def.ab]);
@@ -3081,6 +3215,7 @@ function endRun(){
   const newDex = checkDexTiers();
 
   scene = 'result';
+  BGM.stop();
   $('hud').classList.add('hidden');
   $('feverBar').classList.add('hidden');
   $('rDist').textContent = fmt(dist) + ' m';
@@ -3105,11 +3240,13 @@ function doPause(silent){
   if (scene !== 'run' || RUN.player.dead) return;
   paused = true;
   $('pauseModal').classList.remove('hidden');
+  BGM.pause();
 }
 function doResume(){
   paused = false;
   $('pauseModal').classList.add('hidden');
   lastT = performance.now();
+  BGM.resume();
 }
 
 /* ---------------- 버튼 연결 ---------------- */
@@ -3122,6 +3259,8 @@ $('btnQuit').addEventListener('click', ()=>{ paused=false; $('pauseModal').class
 $('btnSound').addEventListener('click', ()=>{
   META.sound = !META.sound; saveMeta();
   $('btnSound').textContent = '소리: ' + (META.sound ? '켬' : '끔');
+  if (!META.sound) BGM.stop();
+  else if (scene === 'run' && !paused) BGM.start(RUN && RUN.fever.active);
 });
 function rollGrade(rng){
   const r = rng();
@@ -3415,6 +3554,10 @@ window.__test = {
   get META(){ return META; }, get RUN(){ return RUN; },
   freshMeta, applyLoadedMeta, parseBackupCode, makeBackupCode,
   startRun, update, endRun, tryJump, stageOfM, curScore, render, groundTopAt,
+  __genPattern(x, gy, w){ addSeg(x, w||400, gy); },
+  __runPattern(idx, x, st){ return PATTERNS[idx](x, st); },
+  PATTERNS_LEN: PATTERNS.length,
+  lastDeath(){ return RUN ? RUN.lastDeath : null; },
   applyItem, startFever, buyUpgrade, classLevel, itemDur, scoreMult,
   gachaPull, equipPet, PETS, petAbilityPw, ownedPetCount,
   petBonusTotal, petPowerScore, petStars, petPassiveStars,
