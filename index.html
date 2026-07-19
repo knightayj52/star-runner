@@ -58,7 +58,9 @@
 
   /* ---------- 게임 HUD ---------- */
   #hud { position:fixed; top:calc(8px + env(safe-area-inset-top)); left:0; right:0; z-index:20;
-    display:flex; justify-content:space-between; align-items:flex-start; padding:0 10px; pointer-events:none; }
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
+    pointer-events:none; }
   .hudBox { background:rgba(255,255,255,.82); border-radius:14px; padding:5px 12px; color:#4a4a5a;
     font-size:15px; line-height:1.25; box-shadow:0 2px 4px rgba(0,0,0,.12); }
   #hudScore .big { font-size:21px; color:#e66a00; }
@@ -167,6 +169,14 @@
   #fade { position:fixed; inset:0; background:#122; opacity:0; pointer-events:none; z-index:50;
     transition:opacity .4s; }
   #fade.on { opacity:1; pointer-events:auto; }
+  /* ---------- DOM 색종이 (홈/모달 축하) ---------- */
+  #confettiLayer { position:fixed; inset:0; pointer-events:none; z-index:60; overflow:hidden; }
+  .confPiece { position:absolute; top:-16px; width:9px; height:14px; border-radius:2px;
+    animation:confFall 1.5s ease-in forwards; }
+  @keyframes confFall {
+    0% { transform:translate(0,0) rotate(0deg); opacity:1; }
+    100% { transform:translate(var(--dx), 100vh) rotate(var(--rot)); opacity:0.9; }
+  }
 
   /* ---------- 가로(landscape) & 낮은 높이 대응 ---------- */
   @media (max-height: 500px) {
@@ -188,6 +198,16 @@
     #petGrid { grid-template-columns:repeat(4, 1fr); }
     #hud .hudBox { font-size:13px; padding:4px 10px; }
     #hudScore .big, #hudDist .big { font-size:18px; }
+    /* 가로: 점수/일시정지를 화면 끝에서 더 안쪽으로(노치+안정감) */
+    #hud { top:calc(6px + env(safe-area-inset-top));
+      padding:0 max(28px, env(safe-area-inset-right)) 0 max(28px, env(safe-area-inset-left)); }
+    /* 결과 화면: 세로로 짧으니 컴팩트하게 + 버튼 항상 보이게 */
+    #resultModal .card { max-height:94vh; padding:10px 16px 12px; gap:6px; overflow-y:auto; }
+    #resultModal h2 { font-size:18px; }
+    #resultModal .resLine { font-size:14px; padding:5px 12px; }
+    #resultModal #newRecord { font-size:13px; line-height:1.35; }
+    #resultModal .row { position:sticky; bottom:0; background:#fffdf5; padding-top:6px; margin-top:2px; }
+    #resultModal .row .btn { font-size:15px; padding:9px 18px; min-height:44px; }
   }
   /* 아주 낮은 높이(작은 폰 가로): 홈 통계 숨겨 공간 확보는 하지 않고 더 압축만 */
   @media (max-height: 380px) {
@@ -336,10 +356,12 @@
   <div class="card">
     <h2>기기 이동 코드</h2>
     <div class="tip">코드를 복사해 두었다가 다른 기기의 이 창에 붙여넣고 '가져오기'를 누르면 진행 상황이 옮겨져요.</div>
-    <textarea id="bkText" spellcheck="false"></textarea>
+    <textarea id="bkText" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off"></textarea>
     <div class="row">
-      <button class="btn blue" id="btnExport">코드 만들기</button>
+      <button class="btn blue" id="btnExport">📋 코드 만들기 + 복사</button>
       <button class="btn green" id="btnImport">가져오기</button>
+    </div>
+    <div class="row">
       <button class="btn gray" id="btnBkClose">닫기</button>
     </div>
     <div class="tip" id="bkMsg"></div>
@@ -347,6 +369,7 @@
 </div>
 
 <div id="fade"></div>
+<div id="confettiLayer"></div>
 
 <!-- 가로모드 안내 (세로로 들었을 때) -->
 <div id="rotate" class="hidden">
@@ -772,19 +795,88 @@ function fromB64url(code){
   while (s.length % 4) s += '=';
   return decodeURIComponent(escape(atob(s)));
 }
-function makeBackupCode(){ return BK_PREFIX + toB64url(JSON.stringify(META)); }
+// ===== 컴팩트 백업 코드 v2 =====
+// 소환수/캐릭터/업적을 짧은 문자열로 압축하고 기본값은 생략 -> 코드 길이 대폭 축소
+const PET_IDX = PETS.map(p=>p.id);          // 소환수 순서 = 인덱스
+const CHAR_IDX = CHARS.map(c=>c.id);
+const UP_KEYS = ['dash','magnet','giant','flight','fever','shield','score'];
+function encodeCompact(){
+  const m = META;
+  const o = {};
+  // 숫자 통계 (0이면 생략)
+  if (m.stars) o.s = m.stars;
+  if (m.bestScore) o.bs = m.bestScore;
+  if (m.bestDist) o.bd = Math.floor(m.bestDist);
+  if (m.totalM) o.tm = Math.floor(m.totalM);
+  if (m.plays) o.pl = m.plays;
+  if (m.lifeStars) o.ls = m.lifeStars;
+  if (m.stomps) o.st = m.stomps;
+  if (m.pity) o.pt = m.pity;
+  if (m.bestFever) o.bf = m.bestFever;
+  if (m.sound === false) o.mu = 1;            // 음소거만 기록
+  // 강화: 7개 레벨을 이어붙인 문자열 (예: '3042650')
+  const up = UP_KEYS.map(k=>Math.min(9, m.up[k]||0)).join('');
+  if (up.replace(/0/g,'')) o.u = up;
+  // 소환수: 인덱스+레벨 쌍 (예: 'f4' = 15번째 소환수 lv4). 인덱스는 36진수 1자리
+  let pets = '';
+  for (let i=0;i<PET_IDX.length;i++){ const lv = m.pets[PET_IDX[i]]; if (lv) pets += i.toString(36) + Math.min(9,lv); }
+  if (pets) o.p = pets;
+  if (m.equipped){ const ei = PET_IDX.indexOf(m.equipped); if (ei>=0) o.eq = ei.toString(36); }
+  // 캐릭터: 인덱스+레벨 (exp는 생략, 레벨만 복원)
+  let chars = '';
+  for (let i=0;i<CHAR_IDX.length;i++){ const c = m.chars[CHAR_IDX[i]]; if (c) chars += i + Math.min(30,c.lv).toString(36); }
+  if (chars) o.c = chars;
+  const ci = CHAR_IDX.indexOf(m.charEq); if (ci>0) o.ce = ci;
+  // 업적: 완료한 것들의 인덱스를 36진수로 이어붙임
+  let ach = '';
+  for (let i=0;i<ACHIEVEMENTS.length;i++){ if (m.ach[ACHIEVEMENTS[i].id]) ach += i.toString(36); }
+  if (ach) o.a = ach;
+  // 도감 구간: 받은 idx 이어붙임
+  let dex = '';
+  for (let i=0;i<DEX_TIERS.length;i++){ if (m.dexTiers[i]) dex += i; }
+  if (dex) o.d = dex;
+  return o;
+}
+function decodeCompact(o){
+  const m = freshMeta();
+  if (o.s) m.stars = o.s;
+  if (o.bs) m.bestScore = o.bs;
+  if (o.bd) m.bestDist = o.bd;
+  if (o.tm) m.totalM = o.tm;
+  if (o.pl) m.plays = o.pl;
+  if (o.ls) m.lifeStars = o.ls;
+  if (o.st) m.stomps = o.st;
+  if (o.pt) m.pity = o.pt;
+  if (o.bf) m.bestFever = o.bf;
+  if (o.mu) m.sound = false;
+  if (o.u){ for (let i=0;i<UP_KEYS.length && i<o.u.length;i++) m.up[UP_KEYS[i]] = parseInt(o.u[i],10)||0; }
+  if (o.p){ for (let i=0;i+1<o.p.length;i+=2){ const idx = parseInt(o.p[i],36); const lv = parseInt(o.p[i+1],10); if (PET_IDX[idx]) m.pets[PET_IDX[idx]] = lv; } }
+  if (o.eq !== undefined){ const idx = parseInt(o.eq,36); if (PET_IDX[idx]) m.equipped = PET_IDX[idx]; }
+  m.chars = { rico:{ lv:1, exp:0 } };
+  if (o.c){ for (let i=0;i+1<o.c.length;i+=2){ const idx = parseInt(o.c[i],10); const lv = parseInt(o.c[i+1],36); if (CHAR_IDX[idx]) m.chars[CHAR_IDX[idx]] = { lv:lv||1, exp:0 }; } }
+  if (o.ce !== undefined && CHAR_IDX[o.ce]) m.charEq = CHAR_IDX[o.ce];
+  if (o.a){ for (const ch of o.a){ const idx = parseInt(ch,36); if (ACHIEVEMENTS[idx]) m.ach[ACHIEVEMENTS[idx].id] = true; } }
+  if (o.d){ for (const ch of o.d){ const idx = parseInt(ch,10); if (DEX_TIERS[idx]) m.dexTiers[idx] = true; } }
+  m.v = 1;
+  return m;
+}
+function makeBackupCode(){ return BK_PREFIX + toB64url(JSON.stringify(encodeCompact())); }
 function parseBackupCode(raw){
   if (!raw) return null;
-  // 접두어 위치 탐색(앞뒤 여분 텍스트 허용) -> 공백/줄바꿈 제거 -> 허용 문자만 남김
   const idx = raw.indexOf(BK_PREFIX);
-  if (idx < 0) return null;
-  let body = raw.slice(idx + BK_PREFIX.length);
-  body = body.replace(/\s+/g,'');
-  body = body.replace(/[^A-Za-z0-9\-_]/g,'');
+  let body;
+  if (idx >= 0) body = raw.slice(idx + BK_PREFIX.length);
+  else body = raw;                              // 접두어가 잘려나갔어도 본문만으로 시도
+  body = body.replace(/\s+/g,'').replace(/[^A-Za-z0-9\-_]/g,'');
   if (!body) return null;
   try {
-    const d = parseSaveText(fromB64url(body));
-    return d;
+    const parsed = JSON.parse(fromB64url(body));
+    if (!parsed || typeof parsed !== 'object') return null;
+    // v1(옛 전체 JSON: v 필드 존재) vs v2(컴팩트) 구분
+    if (typeof parsed.v === 'number' && (parsed.up || parsed.pets || parsed.chars)) {
+      return parsed;                             // 옛 전체 포맷 -> applyLoadedMeta가 처리
+    }
+    return decodeCompact(parsed);                // 컴팩트 -> 완전한 META로 복원
   } catch(e){ return null; }
 }
 
@@ -1267,10 +1359,31 @@ function sparkle(wx, y, col){
 }
 function confettiBurst(){
   const cols = ['#ff8fab','#ffd94e','#6cc24a','#5aa9e6','#b8a6e8'];
-  for (let i=0;i<60;i++) RUN.confetti.push({
-    x: Math.random()*W, y: -20 - Math.random()*H*0.4,
-    vx:(Math.random()-0.5)*60, vy: 120+Math.random()*160,
-    col: cols[i%cols.length], rot: Math.random()*6.28, vr:(Math.random()-.5)*8, t:0 });
+  if (RUN && RUN.confetti){
+    for (let i=0;i<60;i++) RUN.confetti.push({
+      x: Math.random()*W, y: -20 - Math.random()*H*0.4,
+      vx:(Math.random()-0.5)*60, vy: 120+Math.random()*160,
+      col: cols[i%cols.length], rot: Math.random()*6.28, vr:(Math.random()-.5)*8, t:0 });
+  } else {
+    domConfetti();   // 홈/모달 화면: DOM 색종이
+  }
+}
+// RUN이 없는 화면(홈, 모달 위)에서 쓰는 CSS 색종이
+function domConfetti(){
+  const layer = document.getElementById('confettiLayer');
+  if (!layer || !document.createElement) return;
+  const cols = ['#ff8fab','#ffd94e','#6cc24a','#5aa9e6','#b8a6e8'];
+  for (let i=0;i<40;i++){
+    const p = document.createElement('div');
+    p.className = 'confPiece';
+    p.style.left = (10 + Math.random()*80) + '%';
+    p.style.background = cols[i % cols.length];
+    p.style.animationDelay = (Math.random()*0.2) + 's';
+    p.style.setProperty('--dx', ((Math.random()-0.5)*160).toFixed(0) + 'px');
+    p.style.setProperty('--rot', (Math.random()*720-360).toFixed(0) + 'deg');
+    layer.appendChild(p);
+    setTimeout(()=>{ p.remove(); }, 1600);
+  }
 }
 let bannerTO = null;
 function banner(msg){
@@ -3483,20 +3596,35 @@ $('btnBackup').addEventListener('click', ()=>{
 $('btnBkClose').addEventListener('click', ()=> $('backupModal').classList.add('hidden'));
 $('btnExport').addEventListener('click', ()=>{
   const code = makeBackupCode();
-  $('bkText').value = code;
-  $('bkText').select();
+  const ta = $('bkText');
+  ta.value = code;
+  ta.focus();
+  ta.setSelectionRange(0, code.length);
   let copied = false;
-  try { copied = document.execCommand('copy'); } catch(e){}
-  if (navigator.clipboard) navigator.clipboard.writeText(code).catch(()=>{});
-  $('bkMsg').textContent = '코드가 만들어졌어요! 길게 눌러 복사한 뒤 메모나 메시지로 보내 두세요.';
+  // 1) 최신 클립보드 API
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(()=>{
+      $('bkMsg').textContent = '✅ 복사됐어요! (' + code.length + '자) 메모나 메시지에 붙여넣어 보관하세요.';
+    }).catch(()=>{
+      tryExec();
+    });
+  } else { tryExec(); }
+  function tryExec(){
+    try { copied = document.execCommand('copy'); } catch(e){}
+    $('bkMsg').textContent = copied
+      ? ('✅ 복사됐어요! (' + code.length + '자) 메모나 메시지에 붙여넣어 보관하세요.')
+      : ('코드를 만들었어요 (' + code.length + '자). 위 칸을 길게 눌러 전체 선택 후 복사하세요.');
+  }
 });
 $('btnImport').addEventListener('click', ()=>{
-  const d = parseBackupCode($('bkText').value);
-  if (!d){ $('bkMsg').textContent = '코드를 읽지 못했어요. 전체를 다시 붙여넣어 주세요.'; return; }
+  const raw = $('bkText').value.trim();
+  if (!raw){ $('bkMsg').textContent = '먼저 다른 기기에서 만든 코드를 위 칸에 붙여넣어 주세요.'; return; }
+  const d = parseBackupCode(raw);
+  if (!d){ $('bkMsg').textContent = '코드를 읽지 못했어요. 코드 전체가 빠짐없이 들어갔는지 확인하고 다시 붙여넣어 주세요.'; return; }
   applyLoadedMeta(d);
   saveMeta();
   $('bkMsg').textContent = '가져오기 성공! 진행 상황이 복원되었어요. 🎉';
-  showHome();
+  setTimeout(()=>{ $('backupModal').classList.add('hidden'); showHome(); }, 800);
 });
 
 /* ---------------- 홈 화면 캐릭터 미리보기 ---------------- */
@@ -3563,7 +3691,8 @@ window.__test = {
   petBonusTotal, petPowerScore, petStars, petPassiveStars,
   CHARS, charExpNeed, charTier, charPassive,
   ACHIEVEMENTS, checkAchievements, achDone, DAILY_POOL, ensureDaily, progressDaily, claimDaily,
-  refreshAttend, claimAttend, attendReward, DEX_TIERS, dexBonusTotal, checkDexTiers, statValue,
+  refreshAttend, claimAttend, attendReward, DEX_TIERS, dexBonusTotal, checkDexTiers, statValue, confettiBurst,
+  makeBackupCode, parseBackupCode, freshMeta, applyLoadedMeta, encodeCompact, decodeCompact,
   setHold(v){ HOLD = v; },
   setMeta(m){ META = m; },
   drawTo(c, fn){
