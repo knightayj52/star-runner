@@ -521,7 +521,7 @@ body{background:#132838;font-family:'Jua','Malgun Gothic','Apple SD Gothic Neo',
 #home{display:grid;grid-template-columns:minmax(330px,1fr) minmax(260px,.85fr);grid-template-rows:auto auto 1fr auto;grid-template-areas:'title hero' 'subtitle hero' 'buttons hero' 'stats stats';align-items:center;justify-items:start;text-align:left;padding:clamp(22px,5vw,74px);gap:12px 30px;background-color:#153e45;background-size:cover;background-position:center;isolation:isolate}
 #home:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,27,37,.92),rgba(7,27,37,.5) 56%,rgba(7,27,37,.10));z-index:-1}
 #home h1{grid-area:title;font-size:clamp(30px,4.5vw,62px);line-height:1.2;color:#fff5d7;letter-spacing:-2px;text-shadow:0 4px 18px #102638;width:auto!important;margin:0}
-#home h1:before{content:'STARBREEZE RUN  /  4.2';display:block;font:600 12px/2.8 sans-serif;letter-spacing:4px;color:#d4dfb5;text-shadow:none}
+#home h1:before{content:'STARBREEZE RUN  /  4.2.1';display:block;font:600 12px/2.8 sans-serif;letter-spacing:4px;color:#d4dfb5;text-shadow:none}
 #home .sub{grid-area:subtitle;color:#bfdbd8;font-size:16px;margin:0;width:auto!important;line-height:1.65}
 #home #heroCv{grid-area:hero;width:min(34vw,390px);height:auto;filter:drop-shadow(0 18px 22px #0d263b99);align-self:center;justify-self:center}
 #homeBtns{grid-area:buttons;align-items:stretch;justify-self:start;gap:10px;margin-top:10px;width:340px}
@@ -804,7 +804,7 @@ body{background:#132838;font-family:'Jua','Malgun Gothic','Apple SD Gothic Neo',
   <div class="rotate-sub">별바람 대모험은 가로 화면에서<br>즐길 수 있어요 😊</div>
 </div>
 
-<div id="releaseModal" class="overlay modal hidden" role="dialog" aria-modal="true" aria-labelledby="releaseTitle"><div class="card"><h2 id="releaseTitle">4.2 · 살아 움직이는 여행</h2><p>소환수와 친구들이 진짜로 달려요!</p><ul><li>소환수 27종에 8컷 달리기·날갯짓·헤엄 동작 추가</li><li>루나·수피 달리기 동작 추가</li><li>움직이는 몬스터 7종(소라게·선인장·수정 젤리·눈사람 새 친구 포함)</li><li>지역마다 다른 장애물: 가시덤불·산호·붉은 바위·얼음</li><li>멀리 갈수록 어려워져요(스피드 최고 10단계 · 여유 6단계)</li><li>기존 보유·기록은 그대로 유지됩니다.</li></ul><p><b>4.1</b> · 8개 지역을 달리고, 새벽 너머의 새 아침으로!</p><ul><li>일반/고속 연속 여행 · 지역마다 400m · 3,200m마다 한 바퀴</li><li>새 배경: 푸른빛 해안 · 붉은 협곡 · 수정 동굴 · 눈꽃 고원</li><li>스피드 여행은 첫 바퀴 기본 1.5~3배, 이후 최대 1,080까지</li><li>속도는 서서히 바뀌며, 아침에는 숨을 고르고 다시 빨라집니다.</li><li>태블릿 전방 시야 확대 · 지역 경계 안전 구간 · 모드별 기록</li><li>4.0의 5개 코스와 신화 3종 새 동작, 기존 보유·기록 유지</li></ul><button id="releaseClose" class="btn">확인</button></div></div><script>(()=>{
+<div id="releaseModal" class="overlay modal hidden" role="dialog" aria-modal="true" aria-labelledby="releaseTitle"><div class="card"><h2 id="releaseTitle">4.2 · 살아 움직이는 여행</h2><p>소환수와 친구들이 진짜로 달려요!</p><ul><li>소환수 27종에 8컷 달리기·날갯짓·헤엄 동작 추가</li><li>루나·수피 달리기 동작 추가</li><li>움직이는 몬스터 7종(소라게·선인장·수정 젤리·눈사람 새 친구 포함)</li><li>지역마다 다른 장애물: 가시덤불·산호·붉은 바위·얼음</li><li>멀리 갈수록 어려워져요(스피드 최고 10단계 · 여유 6단계)</li><li>4.2.1: 세계 일주와 새 코스에 아이템(자석·폭탄·거인·피버·비행)이 다시 나와요.</li><li>기존 보유·기록은 그대로 유지됩니다.</li></ul><p><b>4.1</b> · 8개 지역을 달리고, 새벽 너머의 새 아침으로!</p><ul><li>일반/고속 연속 여행 · 지역마다 400m · 3,200m마다 한 바퀴</li><li>새 배경: 푸른빛 해안 · 붉은 협곡 · 수정 동굴 · 눈꽃 고원</li><li>스피드 여행은 첫 바퀴 기본 1.5~3배, 이후 최대 1,080까지</li><li>속도는 서서히 바뀌며, 아침에는 숨을 고르고 다시 빨라집니다.</li><li>태블릿 전방 시야 확대 · 지역 경계 안전 구간 · 모드별 기록</li><li>4.0의 5개 코스와 신화 3종 새 동작, 기존 보유·기록 유지</li></ul><button id="releaseClose" class="btn">확인</button></div></div><script>(()=>{
 'use strict';
 /* =========================================================
    별바람 대모험 - 1단계: 코어 러닝
@@ -1445,6 +1445,7 @@ function pattern40(x){
  const r=RUN,c=r.course35,k=r.section40++,w=1500;
  // Every section has a safe lower route; optional upper challenges never gate progression.
  addSeg(x,w,GY);starLine(x+90,GY-48,19,66,STAGES[c.stage].starTier);
+ if(k>0&&rhash(x,44)<.18)addItem(x+130,GY-120,pickItemType(x,c.stage));
  if(c.kind==='meadow'){
   if(k%3===1)addSpike(x+850,GY);
   if(k%3===2){addSeg(x+380,420,GY-90);markPad40(x+590,GY-90);starLine(x+400,GY-138,7,52,3);}
@@ -1539,13 +1540,14 @@ function advanceVoyage41(dt){
 function difficulty42(pace,total){const n=Math.max(0,total-1);return pace==='rush'?Math.min(1,n*.09):Math.min(.6,n*.045);}
 function spacing42(pace,D){return pace==='rush'?2.3-D*1.35:3-D*2.4;}
 function level42(D){return 1+Math.round(D*9);}
-function extras42(x,w,block,type,gapEnd,z){
+function extras42(x,w,block,type,gapEnd,z,itemX){
  const r=RUN,D=difficulty42(r.pace41,z.total);r.diff42=D;
  if(z.total===0||D<=0)return;
  const v=targetSpeed41(r.pace41,x/PX_PER_M),step=Math.max(520,v*spacing42(r.pace41,D)),guard=step;
  const busy=type===2?[800,gapEnd]:type===1?[1050,1050]:type===4?[1060,1060]:null;
  for(let c=block===0?760:430;c<w-380;c+=step){
   if(busy&&c>busy[0]-guard&&c<busy[1]+guard)continue;
+  if(itemX&&!busy&&Math.abs(c-itemX)<guard*.6)continue;
   const h=rhash(x+c,42),h2=rhash(x+c,43);
   if(h2>.35+D*.65)continue;
   if(D<.25||h<.42)addSpike(x+c,GY);
@@ -1569,7 +1571,13 @@ function voyagePattern41(x){
   if(type===3){addSeg(x+650,680,GY-110);const begin=r.stars.length;starLine(x+710,GY-160,10,58,4);for(let i=begin;i<r.stars.length;i++)r.stars[i].bonus35=true;r.routes35.push({x:x+400,w:1100});}
   if(type===4){addMonster(x+1060,GY,false,false);starArc(x+800,GY-150,9,62,tier);r.signs41.push({x:x+600,text:'몬스터 · 점프!',top:GY-48});}
  }
- extras42(x,w,block,type,gapEnd42,z);
+ /* 4.2.1 · 아이템 복구. 반드시 뛰어야 하는 곳(가시·몬스터·절벽) 위나 장애물을 비워 둔 평지에 놓아 공정하게 먹을 수 있다. */
+ let itemX42=0;
+ if(block>0&&rhash(x,44)<.25){
+  itemX42=type===1?1050:type===4?1060:type===2?Math.round((800+gapEnd42)/2):type===3?330:1000;
+  addItem(x+itemX42,GY-(type===2?150:125),pickItemType(x,region.stage));
+ }
+ extras42(x,w,block,type,gapEnd42,z,itemX42);
  if(block===0){r.signs41.push({x:x+150,text:region.time+' · '+region.name,top:GY-55});}
  r.signs41=r.signs41.filter(s=>s.x>r.worldX-W);
  return w;
