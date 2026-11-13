@@ -313,7 +313,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { width:100%; height:100%; overflow:hidden; touch-action:none; background:#7ec8e3;
     font-family:'Jua', sans-serif; user-select:none; -webkit-user-select:none; }
-  #cv { position:fixed; inset:0; width:100vw; height:100vh; display:block; }
+  #cv { position:fixed; left:0; top:0; width:100vw; height:100vh; display:block; }
+  /* 4.2.2 · 모바일에서 두 번 터치 시 화면이 밀리거나 확대되지 않도록 문서 자체를 고정 */
+  html, body { position:fixed; left:0; top:0; overscroll-behavior:none; -webkit-touch-callout:none; -webkit-text-size-adjust:100%; }
+  #cv, #hud, #hud * { touch-action:none; -webkit-user-select:none; user-select:none; }
 
   /* ---------- 가로모드 안내 ---------- */
   #rotate { position:fixed; inset:0; z-index:9999; background:linear-gradient(160deg,#3a4a80,#5a6ab0);
@@ -521,7 +524,7 @@ body{background:#132838;font-family:'Jua','Malgun Gothic','Apple SD Gothic Neo',
 #home{display:grid;grid-template-columns:minmax(330px,1fr) minmax(260px,.85fr);grid-template-rows:auto auto 1fr auto;grid-template-areas:'title hero' 'subtitle hero' 'buttons hero' 'stats stats';align-items:center;justify-items:start;text-align:left;padding:clamp(22px,5vw,74px);gap:12px 30px;background-color:#153e45;background-size:cover;background-position:center;isolation:isolate}
 #home:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,27,37,.92),rgba(7,27,37,.5) 56%,rgba(7,27,37,.10));z-index:-1}
 #home h1{grid-area:title;font-size:clamp(30px,4.5vw,62px);line-height:1.2;color:#fff5d7;letter-spacing:-2px;text-shadow:0 4px 18px #102638;width:auto!important;margin:0}
-#home h1:before{content:'STARBREEZE RUN  /  4.2.1';display:block;font:600 12px/2.8 sans-serif;letter-spacing:4px;color:#d4dfb5;text-shadow:none}
+#home h1:before{content:'STARBREEZE RUN  /  4.2.2';display:block;font:600 12px/2.8 sans-serif;letter-spacing:4px;color:#d4dfb5;text-shadow:none}
 #home .sub{grid-area:subtitle;color:#bfdbd8;font-size:16px;margin:0;width:auto!important;line-height:1.65}
 #home #heroCv{grid-area:hero;width:min(34vw,390px);height:auto;filter:drop-shadow(0 18px 22px #0d263b99);align-self:center;justify-self:center}
 #homeBtns{grid-area:buttons;align-items:stretch;justify-self:start;gap:10px;margin-top:10px;width:340px}
@@ -2078,6 +2081,7 @@ function resize(){
     W = vw; H = vh;
   }
   if(RUN?.view41&&!isPortrait){W=Math.max(1280,vw);H=vh*(W/vw);}
+  cv.style.width=vw+'px';cv.style.height=vh+'px';
   cv.width = Math.max(1, Math.floor(vw * DPR));
   cv.height = Math.max(1, Math.floor(vh * DPR));
   mainCtx.setTransform(DPR*vw/W,0,0,DPR*vh/H,0,0);
@@ -2392,6 +2396,16 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('keyup',e=>{heldKeys.delete(e.code);syncHold();});
 window.addEventListener('contextmenu', e => e.preventDefault());
+/* 4.2.2 · 모바일 터치 안정화: 달리는 중 화면을 연속으로 눌러도 브라우저가 확대·스크롤·글자 선택을 하지 않게 한다. */
+(()=>{
+ const uiTarget=e=>e.target.closest?.('button, .card, textarea, input, select, label, a');
+ for(const type of ['touchstart','touchmove','touchend'])document.addEventListener(type,e=>{if(scene==='run'&&!uiTarget(e)&&e.cancelable)e.preventDefault();},{passive:false});
+ let lastEnd=0;document.addEventListener('touchend',e=>{const now=Date.now();if(now-lastEnd<350&&!uiTarget(e)&&e.cancelable)e.preventDefault();lastEnd=now;},{passive:false});
+ for(const type of ['gesturestart','gesturechange','gestureend','dblclick'])document.addEventListener(type,e=>{if(e.cancelable)e.preventDefault();},{passive:false});
+ const pin=()=>{if(window.scrollX||window.scrollY)window.scrollTo(0,0);if(document.documentElement.scrollTop)document.documentElement.scrollTop=0;if(document.body.scrollTop)document.body.scrollTop=0;};
+ window.addEventListener('scroll',pin,{passive:true});
+ if(window.visualViewport){window.visualViewport.addEventListener('resize',()=>{pin();resize();});window.visualViewport.addEventListener('scroll',pin);}
+})();
 document.addEventListener('visibilitychange', ()=>{
   resetInput();
   if (document.hidden && scene === 'run' && !paused) doPause(true);
