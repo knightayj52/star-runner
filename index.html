@@ -524,7 +524,7 @@ body{background:#132838;font-family:'Jua','Malgun Gothic','Apple SD Gothic Neo',
 #home{display:grid;grid-template-columns:minmax(330px,1fr) minmax(260px,.85fr);grid-template-rows:auto auto 1fr auto;grid-template-areas:'title hero' 'subtitle hero' 'buttons hero' 'stats stats';align-items:center;justify-items:start;text-align:left;padding:clamp(22px,5vw,74px);gap:12px 30px;background-color:#153e45;background-size:cover;background-position:center;isolation:isolate}
 #home:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,27,37,.92),rgba(7,27,37,.5) 56%,rgba(7,27,37,.10));z-index:-1}
 #home h1{grid-area:title;font-size:clamp(30px,4.5vw,62px);line-height:1.2;color:#fff5d7;letter-spacing:-2px;text-shadow:0 4px 18px #102638;width:auto!important;margin:0}
-#home h1:before{content:'STARBREEZE RUN  /  4.4';display:block;font:600 12px/2.8 sans-serif;letter-spacing:4px;color:#d4dfb5;text-shadow:none}
+#home h1:before{content:'STARBREEZE RUN  /  4.4.1';display:block;font:600 12px/2.8 sans-serif;letter-spacing:4px;color:#d4dfb5;text-shadow:none}
 #home .sub{grid-area:subtitle;color:#bfdbd8;font-size:16px;margin:0;width:auto!important;line-height:1.65}
 #home #heroCv{grid-area:hero;width:min(34vw,390px);height:auto;filter:drop-shadow(0 18px 22px #0d263b99);align-self:center;justify-self:center}
 #homeBtns{grid-area:buttons;align-items:stretch;justify-self:start;gap:10px;margin-top:10px;width:340px}
@@ -794,6 +794,9 @@ body{background:#132838;font-family:'Jua','Malgun Gothic','Apple SD Gothic Neo',
       <button class="btn gray" id="btnBkClose">닫기</button>
     </div>
     <div class="tip" id="bkMsg"></div>
+    <div class="tip" style="margin-top:10px;border-top:1px dashed #b9ad8a;padding-top:10px"><b>🔑 개발자 코드</b> <small>· 현재 버전 4.4.1</small><br>영쌤 전용 코드를 아래 칸에 입력하고 <b>코드 사용</b>을 누르세요.</div>
+    <div class="row"><input id="devText44" type="text" spellcheck="false" autocomplete="off" autocapitalize="characters" autocorrect="off" placeholder="개발자 코드 12자" style="flex:1;min-width:0;min-height:42px;padding:8px 12px;border-radius:12px;border:1px solid #b9ad8a;font:16px monospace;user-select:text;-webkit-user-select:text;touch-action:auto"><button class="btn blue" id="btnDev44">코드 사용</button></div>
+    <div class="tip" id="devMsg44"></div>
   </div>
 </div>
 
@@ -5187,19 +5190,21 @@ function sha256_43(s){const K=[],H=[];const isP=n=>{for(let f=2;f*f<=n;f++)if(n%
   for(let j=0;j<64;j++){const t1=(h+(R(e,6)^R(e,11)^R(e,25))+((e&f)^(~e&g))+K[j]+W[j])|0,t2=((R(a,2)^R(a,13)^R(a,22))+((a&b2)^(a&c)^(b2&c)))|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b2;b2=a;a=(t1+t2)|0;}
   H[0]=(H[0]+a)|0;H[1]=(H[1]+b2)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;}
  return H.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');}
-function devCode43(raw){
+function devCode43(raw,target='bkMsg'){
  if(raw.indexOf('BARAM1:')>=0)return false;
- const c=raw.toUpperCase().replace(/[^A-Z0-9]/g,'');if(c.length<8||c.length>24)return false;
+ const c=raw.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g,'');if(c.length<8||c.length>24)return false;
  const k=sha256_43('starbreeze43:'+c);let msg='';
  if(k==='35e63e8180c87f463c256fce072d27345cc811b33322bd7a57630fa85b30fed6'){for(const p of PETS)META.pets[p.id]=PET_MAX;msg='🔑 개발자 코드 확인! 소환수 '+PETS.length+'종을 모두 최대 레벨로 받았어요.';}
  else if(k==='a8e457c8c90747962ff80207f598c48b2bff4e50705cef1e2fdd47b10a2fcd19'){META.stars+=100000;msg='🔑 개발자 코드 확인! 별 100,000개를 받았어요. (현재 '+fmt(META.stars)+'개)';}
  else return false;
  try{checkDexTiers();checkAchievements();}catch(e){}
  saveMeta();try{showHomeStatOnly();}catch(e){}
- $('bkText').value='';$('bkMsg').textContent=msg;return true;
+ $('bkText').value='';$(target).textContent=msg;return true;
 }
+$('btnDev44').addEventListener('click',()=>{const v=$('devText44').value;if(!v.trim()){$('devMsg44').textContent='코드를 먼저 입력해 주세요.';return;}if(devCode43(v,'devMsg44')){$('devText44').value='';return;}const c=v.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g,'');$('devMsg44').textContent='❌ 맞는 코드가 아니에요. 읽은 글자: '+c+' ('+c.length+'자 · 12자여야 해요). 숫자 0·1과 영문 O·I·L은 코드에 쓰이지 않아요.';});
 function doImport(raw){
   if(devCode43(raw))return;
+  if(/^[\sA-Za-z0-9-]{6,26}$/.test(raw)){$('bkMsg').textContent='❌ 개발자 코드가 맞지 않아요. 글자를 다시 확인해 주세요. (숫자 0·1과 영문 O·I·L은 쓰이지 않아요)';return;}
   const d = parseBackupCode(raw);
   if (!d){
     // 실패 진단: 접두어가 있는지, 길이가 너무 짧은지 알려준다
